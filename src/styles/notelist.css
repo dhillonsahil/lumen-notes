@@ -140,6 +140,25 @@
   border-color: var(--color-accent);
 }
 
+.notelist-empty-trash-btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.notelist-empty-trash-btn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
 /* Scrollable Note Items List */
 .notelist-items {
   flex: 1;

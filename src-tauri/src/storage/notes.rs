@@ -101,7 +101,9 @@ impl NoteRepository {
             query.push_str(" AND pinned = 1");
         }
 
-        if filter.include_archived == Some(false) {
+        if filter.only_archived == Some(true) {
+            query.push_str(" AND archived = 1");
+        } else if filter.include_archived == Some(false) {
             query.push_str(" AND archived = 0");
         }
 

@@ -30,6 +30,9 @@ export interface EditorViewProps {
   initialContent?: JSONContent;
   saveStatus?: SaveStatus;
   errorMessage?: string;
+  isTrash?: boolean;
+  onRestoreNote?: () => void;
+  onPermanentDeleteNote?: () => void;
   onContentChange?: (title: string, content: JSONContent, plainText: string) => void;
   onRetrySave?: () => void;
   onReloadNote?: () => void;
@@ -47,6 +50,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
   initialContent,
   saveStatus = 'saved',
   errorMessage,
+  isTrash = false,
+  onRestoreNote,
+  onPermanentDeleteNote,
   onContentChange,
   onRetrySave,
   onReloadNote,
@@ -78,6 +84,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   // Attachment delete confirmation modal state
   const [confirmDeleteAttachmentId, setConfirmDeleteAttachmentId] = useState<string | null>(null);
+
+  // Trash note delete confirmation modal state
+  const [showDeleteNoteModal, setShowDeleteNoteModal] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Snapshots state
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
@@ -215,6 +225,14 @@ export const EditorView: React.FC<EditorViewProps> = ({
     }
     prevSaveStatusRef.current = saveStatus;
   }, [saveStatus, noteId]);
+
+  // Auto-focus title input when creating a new note
+  useEffect(() => {
+    if (!initialTitle || initialTitle.trim() === '' || initialTitle === 'New Note') {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }
+  }, [noteId]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -550,12 +568,84 @@ export const EditorView: React.FC<EditorViewProps> = ({
         }}
       >
         <div className="editor-content-wrapper">
+          {/* Trashed Note Banner with Restore & Delete Permanently */}
+          {isTrash && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 14px',
+                marginBottom: '16px',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '12px',
+                color: 'var(--color-text)',
+              }}
+              data-testid="editor-trash-banner"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trash2 size={15} color="#ef4444" />
+                <span style={{ fontWeight: 500 }}>This note is in the Trash.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {onRestoreNote && (
+                  <button
+                    type="button"
+                    onClick={onRestoreNote}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-divider)',
+                      background: 'var(--color-main-bg)',
+                      color: 'var(--color-text)',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                    data-testid="trash-banner-restore-btn"
+                  >
+                    Restore
+                  </button>
+                )}
+                {onPermanentDeleteNote && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteNoteModal(true)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      backgroundColor: '#ef4444',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                    data-testid="trash-banner-delete-btn"
+                  >
+                    Delete Permanently
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <input
+            ref={titleInputRef}
             type="text"
             className="editor-title-input"
             placeholder="Title"
             value={title}
+            disabled={isTrash}
             onChange={handleTitleChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                editor?.commands.focus('start');
+              }
+            }}
             data-testid="editor-title-input"
             aria-label="Note Title"
           />
@@ -772,6 +862,22 @@ export const EditorView: React.FC<EditorViewProps> = ({
           setConfirmDeleteAttachmentId(null);
         }}
         onCancel={() => setConfirmDeleteAttachmentId(null)}
+      />
+
+      {/* Note Permanent Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteNoteModal}
+        title="Permanently Delete Note?"
+        message="This note will be permanently erased from your database. This action cannot be undone."
+        confirmLabel="Delete Permanently"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        icon="trash"
+        onConfirm={() => {
+          onPermanentDeleteNote?.();
+          setShowDeleteNoteModal(false);
+        }}
+        onCancel={() => setShowDeleteNoteModal(false)}
       />
     </div>
   );

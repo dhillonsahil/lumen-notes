@@ -65,8 +65,9 @@ export function useNotesManager() {
         filter.is_trash = false;
         if (activeView === 'favorites') {
           filter.only_favorites = true;
+          filter.include_archived = false;
         } else if (activeView === 'archive') {
-          filter.include_archived = true;
+          filter.only_archived = true;
         } else {
           filter.include_archived = false;
         }
@@ -450,9 +451,9 @@ export function useNotesManager() {
     const currentNoteId = activeNoteRef.current?.id || active.id;
     try {
       setSaveStatus('saving');
-      const snap = await ipcClient.createSnapshot(currentNoteId);
+      await ipcClient.createSnapshot(currentNoteId);
       setSaveStatus('saved');
-      setSnapshotToastMessage(`Snapshot saved (Revision ${snap.revision})`);
+      setSnapshotToastMessage('Snapshot saved to Version History');
       setTimeout(() => setSnapshotToastMessage(null), 3000);
     } catch (err: unknown) {
       console.error('Failed to create snapshot on manual save:', err);

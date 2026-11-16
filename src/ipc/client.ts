@@ -105,7 +105,8 @@ class MockStorageAdapter {
       if (filter.folder_id && note.folder_id !== filter.folder_id) continue;
       if (filter.only_favorites && !note.favorite) continue;
       if (filter.only_pinned && !note.pinned) continue;
-      if (!filter.include_archived && note.archived) continue;
+      if (filter.only_archived && !note.archived) continue;
+      if (!filter.include_archived && !filter.only_archived && note.archived) continue;
 
       if (filter.search_query?.trim()) {
         const q = filter.search_query.trim().toLowerCase();

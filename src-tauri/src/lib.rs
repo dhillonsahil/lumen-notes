@@ -31,6 +31,13 @@ pub fn run() {
             app.manage(storage);
             app.manage(attachments);
             app.manage(exchange);
+
+            if let Some(icon) = app.default_window_icon() {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.set_icon(icon.clone());
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

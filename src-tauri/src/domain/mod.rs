@@ -39,6 +39,7 @@ pub struct NoteFilter {
     pub folder_id: Option<String>,
     pub tag_id: Option<String>,
     pub include_archived: Option<bool>,
+    pub only_archived: Option<bool>,
     pub only_favorites: Option<bool>,
     pub only_pinned: Option<bool>,
     pub is_trash: Option<bool>,

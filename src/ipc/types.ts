@@ -36,6 +36,7 @@ export interface NoteFilter {
   folder_id?: string | null;
   tag_id?: string | null;
   include_archived?: boolean;
+  only_archived?: boolean;
   only_favorites?: boolean;
   only_pinned?: boolean;
   is_trash?: boolean;

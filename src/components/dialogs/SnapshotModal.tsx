@@ -21,7 +21,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [restoreTarget, setConfirmRestoreTarget] = useState<Snapshot | null>(null);
+  const [restoreTarget, setConfirmRestoreTarget] = useState<{ snapshot: Snapshot; versionNumber: number } | null>(null);
 
   const loadSnapshots = async () => {
     setLoading(true);
@@ -54,8 +54,8 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
     }
   };
 
-  const handleRestore = (snapshot: Snapshot) => {
-    setConfirmRestoreTarget(snapshot);
+  const handleRestore = (snapshot: Snapshot, versionNumber: number) => {
+    setConfirmRestoreTarget({ snapshot, versionNumber });
   };
 
   const executeRestore = async (snapshot: Snapshot) => {
@@ -181,52 +181,55 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
               No snapshots created yet. Click "Snapshot" above to save the current version.
             </div>
           ) : (
-            snapshots.map((snap) => (
-              <div
-                key={snap.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--color-hover)',
-                  border: '1px solid var(--color-divider)',
-                }}
-                data-testid={`snapshot-item-${snap.id}`}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text)' }}>
-                    Revision {snap.revision} · {snap.title || 'Untitled'}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--color-secondary)', marginTop: '2px' }}>
-                    {formatTimestamp(snap.created_at)}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleRestore(snap)}
-                  disabled={restoringId === snap.id}
+            snapshots.map((snap, index) => {
+              const versionNumber = snapshots.length - index;
+              return (
+                <div
+                  key={snap.id}
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--color-divider)',
-                    backgroundColor: 'var(--color-main-bg)',
-                    color: 'var(--color-text)',
-                    cursor: 'pointer',
-                    fontSize: '12px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--color-hover)',
+                    border: '1px solid var(--color-divider)',
                   }}
-                  data-testid={`restore-snapshot-btn-${snap.id}`}
+                  data-testid={`snapshot-item-${snap.id}`}
                 >
-                  <RotateCcw size={12} />
-                  <span>Restore</span>
-                </button>
-              </div>
-            ))
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text)' }}>
+                      Version {versionNumber} · {snap.title || 'Untitled'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-secondary)', marginTop: '2px' }}>
+                      {formatTimestamp(snap.created_at)}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRestore(snap, versionNumber)}
+                    disabled={restoringId === snap.id}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-divider)',
+                      backgroundColor: 'var(--color-main-bg)',
+                      color: 'var(--color-text)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    data-testid={`restore-snapshot-btn-${snap.id}`}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Restore</span>
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
 
@@ -259,13 +262,13 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
       <ConfirmModal
         isOpen={!!restoreTarget}
         title="Restore Version Snapshot?"
-        message={`Restore note to Revision ${restoreTarget?.revision}? Your current draft will be replaced with this version.`}
+        message={`Restore note to Version ${restoreTarget?.versionNumber}? Your current draft will be replaced with this version.`}
         confirmLabel="Restore Version"
         cancelLabel="Cancel"
         isDestructive={false}
         icon="restore"
         onConfirm={() => {
-          if (restoreTarget) executeRestore(restoreTarget);
+          if (restoreTarget) executeRestore(restoreTarget.snapshot);
         }}
         onCancel={() => setConfirmRestoreTarget(null)}
       />

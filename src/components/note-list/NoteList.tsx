@@ -64,6 +64,7 @@ export const NoteList: React.FC<NoteListProps> = ({
     noteId: string;
     permanent: boolean;
   }>({ isOpen: false, noteId: '', permanent: false });
+  const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
 
   const formatDate = (isoString: string): string => {
     try {
@@ -155,6 +156,19 @@ export const NoteList: React.FC<NoteListProps> = ({
               data-testid="notelist-sort-order-btn"
             >
               {sortOrder === 'asc' ? <ArrowUpNarrowWide size={15} /> : <ArrowDownWideNarrow size={15} />}
+            </button>
+          )}
+
+          {activeView === 'trash' && notes.length > 0 && (
+            <button
+              type="button"
+              className="notelist-empty-trash-btn"
+              onClick={() => setShowEmptyTrashModal(true)}
+              title="Empty all notes in Trash"
+              aria-label="Empty all notes in Trash"
+              data-testid="notelist-empty-trash-btn"
+            >
+              Empty
             </button>
           )}
 
@@ -365,6 +379,21 @@ export const NoteList: React.FC<NoteListProps> = ({
           setDeleteModalState({ isOpen: false, noteId: '', permanent: false });
         }}
         onCancel={() => setDeleteModalState({ isOpen: false, noteId: '', permanent: false })}
+      />
+
+      <ConfirmModal
+        isOpen={showEmptyTrashModal}
+        title="Empty Trash?"
+        message="Are you sure you want to permanently erase all notes in Trash? This action cannot be undone."
+        confirmLabel="Empty Trash"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        icon="trash"
+        onConfirm={() => {
+          notes.forEach((n) => onDeleteNote(n.id, true));
+          setShowEmptyTrashModal(false);
+        }}
+        onCancel={() => setShowEmptyTrashModal(false)}
       />
     </div>
   );

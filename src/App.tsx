@@ -307,6 +307,9 @@ export function App() {
               initialContent={parsedContent}
               saveStatus={saveStatus}
               errorMessage={errorMessage}
+              isTrash={activeView === 'trash' || !!activeNote.deleted_at}
+              onRestoreNote={() => handleRestoreNote(activeNote.id)}
+              onPermanentDeleteNote={() => handleDeleteNote(activeNote.id, true)}
               onContentChange={handleContentChange}
               onRetrySave={flushPendingSave}
               onReloadNote={reloadNotes}
