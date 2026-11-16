@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Moon, Sun, Monitor, HardDrive, ShieldCheck, Download, Upload, Database } from 'lucide-react';
+import { X, Moon, Sun, Monitor, HardDrive, ShieldCheck, Download, Upload, Database, History } from 'lucide-react';
 import { ipcClient } from '../../ipc/client';
 import type { AppSettings, ImportPreview, ImportResult } from '../../ipc/types';
 import { ImportPreviewModal } from '../dialogs/ImportPreviewModal';
@@ -257,6 +257,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Moon size={18} />
                   <span>Dark</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Autosave & Version History Notice */}
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <History size={15} color="var(--color-accent)" />
+                <span>Autosave & Version History</span>
+              </div>
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--color-hover)',
+                  border: '1px solid var(--color-divider)',
+                  fontSize: '12px',
+                  lineHeight: '1.5',
+                  color: 'var(--color-text)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+                data-testid="settings-autosave-info"
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>•</span>
+                  <div>
+                    <strong>Continuous Draft Autosave (700ms):</strong> Any typing or edit is automatically debounced and saved to local SQLite storage 700ms after you pause.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>•</span>
+                  <div>
+                    <strong>Version History Snapshots:</strong> Snapshots (restore points) are captured on manual save via <kbd style={{ padding: '2px 5px', borderRadius: '3px', background: 'var(--color-main-bg)', border: '1px solid var(--color-divider)', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>Ctrl + S</kbd> or by clicking <strong>+ Snapshot</strong> inside Version History. Unchanged drafts or trailing spaces are deduplicated so you only capture meaningful revisions.
+                  </div>
+                </div>
               </div>
             </div>
 

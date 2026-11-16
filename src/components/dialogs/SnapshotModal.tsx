@@ -131,10 +131,15 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
           </button>
         </div>
 
-        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-divider)' }}>
-          <span style={{ fontSize: '13px', color: 'var(--color-secondary)' }}>
-            Capture points in time or restore earlier revisions.
-          </span>
+        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-divider)', gap: '12px' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: 500 }}>
+              Capture restore points or roll back to earlier versions.
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--color-secondary)', marginTop: '2px' }}>
+              Snapshots save manually on <kbd style={{ padding: '1px 4px', borderRadius: '3px', background: 'var(--color-hover)', border: '1px solid var(--color-divider)', fontSize: '10px' }}>Ctrl + S</kbd> or <strong>+ Snapshot</strong>. Drafts autosave continuously.
+            </div>
+          </div>
           <button
             type="button"
             onClick={handleCreateSnapshot}

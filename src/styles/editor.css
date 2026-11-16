@@ -150,12 +150,6 @@ select option {
   font-weight: 600;
 }
 
-@media (max-width: 950px) {
-  .toolbar-collapsible {
-    display: none !important;
-  }
-}
-
 /* Find Bar */
 .editor-find-bar {
   display: flex;

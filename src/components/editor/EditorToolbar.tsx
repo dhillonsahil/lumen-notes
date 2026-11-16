@@ -51,6 +51,38 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const [linkError, setLinkError] = useState('');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarWidth, setToolbarWidth] = useState<number>(1000);
+
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+
+    if (typeof ResizeObserver === 'undefined') {
+      setToolbarWidth(el.clientWidth || 800);
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentBoxSize) {
+          const width = entry.contentBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+          setToolbarWidth(width);
+        } else {
+          setToolbarWidth(entry.contentRect.width);
+        }
+      }
+    });
+
+    observer.observe(el);
+    setToolbarWidth(el.clientWidth || 800);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const isFull = toolbarWidth >= 940;
+  const isNarrow = toolbarWidth < 700;
+  const showMoreButton = !isFull;
 
   useEffect(() => {
     if (!showMoreMenu) return;
@@ -119,7 +151,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   };
 
   return (
-    <div className="editor-toolbar" role="toolbar" aria-label="Editor Formatting Toolbar">
+    <div ref={toolbarRef} className="editor-toolbar" role="toolbar" aria-label="Editor Formatting Toolbar">
       <div className="toolbar-group">
         <button
           type="button"
@@ -189,91 +221,102 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         >
           <UnderlineIcon size={16} />
         </button>
-        <button
-          type="button"
-          className={`toolbar-btn toolbar-collapsible ${state.isStrike ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'strike')}
-          title="Strikethrough"
-          aria-label="Strikethrough"
-          aria-pressed={state.isStrike}
-        >
-          <Strikethrough size={16} />
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn toolbar-collapsible ${state.isCode ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'code')}
-          title="Inline Code"
-          aria-label="Inline Code"
-          aria-pressed={state.isCode}
-        >
-          <Code size={16} />
-        </button>
+        {isFull && (
+          <>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isStrike ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'strike')}
+              title="Strikethrough"
+              aria-label="Strikethrough"
+              aria-pressed={state.isStrike}
+            >
+              <Strikethrough size={16} />
+            </button>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isCode ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'code')}
+              title="Inline Code"
+              aria-label="Inline Code"
+              aria-pressed={state.isCode}
+            >
+              <Code size={16} />
+            </button>
+          </>
+        )}
 
-        <div className="toolbar-separator" />
+        {!isNarrow && <div className="toolbar-separator" />}
 
-        <button
-          type="button"
-          className={`toolbar-btn ${state.isBulletList ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'bulletList')}
-          title="Bulleted List"
-          aria-label="Bulleted List"
-          aria-pressed={state.isBulletList}
-        >
-          <List size={16} />
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn ${state.isOrderedList ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'orderedList')}
-          title="Numbered List"
-          aria-label="Numbered List"
-          aria-pressed={state.isOrderedList}
-        >
-          <ListOrdered size={16} />
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn ${state.isTaskList ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'taskList')}
-          title="Checklist"
-          aria-label="Checklist"
-          aria-pressed={state.isTaskList}
-        >
-          <CheckSquare size={16} />
-        </button>
+        {!isNarrow && (
+          <>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isBulletList ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'bulletList')}
+              title="Bulleted List"
+              aria-label="Bulleted List"
+              aria-pressed={state.isBulletList}
+            >
+              <List size={16} />
+            </button>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isOrderedList ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'orderedList')}
+              title="Numbered List"
+              aria-label="Numbered List"
+              aria-pressed={state.isOrderedList}
+            >
+              <ListOrdered size={16} />
+            </button>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isTaskList ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'taskList')}
+              title="Checklist"
+              aria-label="Checklist"
+              aria-pressed={state.isTaskList}
+            >
+              <CheckSquare size={16} />
+            </button>
+          </>
+        )}
 
-        <div className="toolbar-separator toolbar-collapsible" />
-
-        <button
-          type="button"
-          className={`toolbar-btn toolbar-collapsible ${state.isBlockquote ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'blockquote')}
-          title="Block Quote"
-          aria-label="Block Quote"
-          aria-pressed={state.isBlockquote}
-        >
-          <Quote size={16} />
-        </button>
-        <button
-          type="button"
-          className={`toolbar-btn toolbar-collapsible ${state.isCodeBlock ? 'is-active' : ''}`}
-          onMouseDown={(e) => handleAction(e, 'codeBlock')}
-          title="Code Block"
-          aria-label="Code Block"
-          aria-pressed={state.isCodeBlock}
-        >
-          <SquareCode size={16} />
-        </button>
-        <button
-          type="button"
-          className="toolbar-btn toolbar-collapsible"
-          onMouseDown={(e) => handleAction(e, 'horizontalRule')}
-          title="Horizontal Rule"
-          aria-label="Horizontal Rule"
-        >
-          <Minus size={16} />
-        </button>
+        {isFull && (
+          <>
+            <div className="toolbar-separator" />
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isBlockquote ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'blockquote')}
+              title="Block Quote"
+              aria-label="Block Quote"
+              aria-pressed={state.isBlockquote}
+            >
+              <Quote size={16} />
+            </button>
+            <button
+              type="button"
+              className={`toolbar-btn ${state.isCodeBlock ? 'is-active' : ''}`}
+              onMouseDown={(e) => handleAction(e, 'codeBlock')}
+              title="Code Block"
+              aria-label="Code Block"
+              aria-pressed={state.isCodeBlock}
+            >
+              <SquareCode size={16} />
+            </button>
+            <button
+              type="button"
+              className="toolbar-btn"
+              onMouseDown={(e) => handleAction(e, 'horizontalRule')}
+              title="Horizontal Rule"
+              aria-label="Horizontal Rule"
+            >
+              <Minus size={16} />
+            </button>
+          </>
+        )}
 
         <div className="toolbar-separator" />
 
@@ -300,7 +343,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
       </div>
 
       <div className="toolbar-group">
-        {onInsertImage && (
+        {onInsertImage && !isNarrow && (
           <button
             type="button"
             className="toolbar-btn"
@@ -316,7 +359,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </button>
         )}
 
-        {onAttachClick && (
+        {onAttachClick && !isNarrow && (
           <button
             type="button"
             className="toolbar-btn"
@@ -332,10 +375,10 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </button>
         )}
 
-        {onOpenSnapshots && (
+        {onOpenSnapshots && !isNarrow && (
           <button
             type="button"
-            className="toolbar-btn toolbar-collapsible"
+            className="toolbar-btn"
             onMouseDown={(e) => {
               e.preventDefault();
               onOpenSnapshots();
@@ -348,8 +391,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </button>
         )}
 
-        {onExportNote && (
-          <div className="toolbar-collapsible" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+        {onExportNote && isFull && (
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <select
               style={{
                 height: '28px',
@@ -380,7 +423,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </div>
         )}
 
-        {onToggleFind && (
+        {onToggleFind && !isNarrow && (
           <button
             type="button"
             className={`toolbar-btn ${isFindOpen ? 'is-active' : ''}`}
@@ -395,161 +438,229 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </button>
         )}
 
-        {/* 3-Dot Responsive Overflow Menu */}
-        <div style={{ position: 'relative' }} ref={moreMenuRef}>
-          <button
-            type="button"
-            className={`toolbar-btn ${showMoreMenu ? 'is-active' : ''}`}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setShowMoreMenu((prev) => !prev);
-            }}
-            title="More Options"
-            aria-label="More Options"
-            data-testid="toolbar-more-btn"
-          >
-            <MoreHorizontal size={16} />
-          </button>
+        {/* 3-Dot Responsive Overflow Menu: only rendered when not in full mode */}
+        {showMoreButton && (
+          <div style={{ position: 'relative' }} ref={moreMenuRef}>
+            <button
+              type="button"
+              className={`toolbar-btn ${showMoreMenu ? 'is-active' : ''}`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setShowMoreMenu((prev) => !prev);
+              }}
+              title="More Options"
+              aria-label="More Options"
+              data-testid="toolbar-more-btn"
+            >
+              <MoreHorizontal size={16} />
+            </button>
 
-          {showMoreMenu && (
-            <div className="toolbar-more-menu" data-testid="toolbar-more-menu">
-              {onOpenSnapshots && (
-                <button
-                  type="button"
-                  className="toolbar-more-menu-item"
-                  onClick={() => {
-                    setShowMoreMenu(false);
-                    onOpenSnapshots();
-                  }}
-                  data-testid="more-menu-history-btn"
-                >
-                  <History size={15} />
-                  <span>Version History & Snapshots</span>
-                </button>
-              )}
-
-              {onInsertImage && (
-                <button
-                  type="button"
-                  className="toolbar-more-menu-item"
-                  onClick={() => {
-                    setShowMoreMenu(false);
-                    onInsertImage();
-                  }}
-                >
-                  <ImageIcon size={15} />
-                  <span>Insert Image</span>
-                </button>
-              )}
-
-              {onAttachClick && (
-                <button
-                  type="button"
-                  className="toolbar-more-menu-item"
-                  onClick={() => {
-                    setShowMoreMenu(false);
-                    onAttachClick();
-                  }}
-                >
-                  <Paperclip size={15} />
-                  <span>Attach File</span>
-                </button>
-              )}
-
-              <div className="toolbar-more-menu-divider" />
-
-              <div className="toolbar-more-menu-section-title">Formatting</div>
-
-              <button
-                type="button"
-                className={`toolbar-more-menu-item ${state.isBlockquote ? 'is-active' : ''}`}
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  executeToolbarAction(editor, 'blockquote');
-                }}
-              >
-                <Quote size={15} />
-                <span>Blockquote</span>
-              </button>
-
-              <button
-                type="button"
-                className={`toolbar-more-menu-item ${state.isCodeBlock ? 'is-active' : ''}`}
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  executeToolbarAction(editor, 'codeBlock');
-                }}
-              >
-                <SquareCode size={15} />
-                <span>Code Block</span>
-              </button>
-
-              <button
-                type="button"
-                className="toolbar-more-menu-item"
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  executeToolbarAction(editor, 'horizontalRule');
-                }}
-              >
-                <Minus size={15} />
-                <span>Horizontal Rule</span>
-              </button>
-
-              <button
-                type="button"
-                className={`toolbar-more-menu-item ${state.isStrike ? 'is-active' : ''}`}
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  executeToolbarAction(editor, 'strike');
-                }}
-              >
-                <Strikethrough size={15} />
-                <span>Strikethrough</span>
-              </button>
-
-              {onExportNote && (
-                <>
-                  <div className="toolbar-more-menu-divider" />
-                  <div className="toolbar-more-menu-section-title">Export Note</div>
+            {showMoreMenu && (
+              <div className="toolbar-more-menu" data-testid="toolbar-more-menu">
+                {onOpenSnapshots && (
                   <button
                     type="button"
                     className="toolbar-more-menu-item"
                     onClick={() => {
                       setShowMoreMenu(false);
-                      onExportNote('txt');
+                      onOpenSnapshots();
                     }}
+                    data-testid="more-menu-history-btn"
                   >
-                    <FileDown size={15} />
-                    <span>Plain Text (.txt)</span>
+                    <History size={15} />
+                    <span>Version History & Snapshots</span>
                   </button>
+                )}
+
+                {isNarrow && onInsertImage && (
                   <button
                     type="button"
                     className="toolbar-more-menu-item"
                     onClick={() => {
                       setShowMoreMenu(false);
-                      onExportNote('html');
+                      onInsertImage();
                     }}
                   >
-                    <FileDown size={15} />
-                    <span>HTML (.html)</span>
+                    <ImageIcon size={15} />
+                    <span>Insert Image</span>
                   </button>
+                )}
+
+                {isNarrow && onAttachClick && (
                   <button
                     type="button"
                     className="toolbar-more-menu-item"
                     onClick={() => {
                       setShowMoreMenu(false);
-                      onExportNote('json');
+                      onAttachClick();
                     }}
                   >
-                    <FileDown size={15} />
-                    <span>JSON Archive (.json)</span>
+                    <Paperclip size={15} />
+                    <span>Attach File</span>
                   </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                )}
+
+                {isNarrow && onToggleFind && (
+                  <button
+                    type="button"
+                    className={`toolbar-more-menu-item ${isFindOpen ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      onToggleFind();
+                    }}
+                  >
+                    <Search size={15} />
+                    <span>Find in Note (Ctrl+F)</span>
+                  </button>
+                )}
+
+                {/* Lists (when narrow) */}
+                {isNarrow && (
+                  <>
+                    <div className="toolbar-more-menu-divider" />
+                    <div className="toolbar-more-menu-section-title">Lists</div>
+                    <button
+                      type="button"
+                      className={`toolbar-more-menu-item ${state.isBulletList ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        executeToolbarAction(editor, 'bulletList');
+                      }}
+                    >
+                      <List size={15} />
+                      <span>Bulleted List</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`toolbar-more-menu-item ${state.isOrderedList ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        executeToolbarAction(editor, 'orderedList');
+                      }}
+                    >
+                      <ListOrdered size={15} />
+                      <span>Numbered List</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`toolbar-more-menu-item ${state.isTaskList ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        executeToolbarAction(editor, 'taskList');
+                      }}
+                    >
+                      <CheckSquare size={15} />
+                      <span>Checklist</span>
+                    </button>
+                  </>
+                )}
+
+                <div className="toolbar-more-menu-divider" />
+                <div className="toolbar-more-menu-section-title">Formatting</div>
+
+                <button
+                  type="button"
+                  className={`toolbar-more-menu-item ${state.isBlockquote ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    executeToolbarAction(editor, 'blockquote');
+                  }}
+                >
+                  <Quote size={15} />
+                  <span>Blockquote</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`toolbar-more-menu-item ${state.isCodeBlock ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    executeToolbarAction(editor, 'codeBlock');
+                  }}
+                >
+                  <SquareCode size={15} />
+                  <span>Code Block</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="toolbar-more-menu-item"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    executeToolbarAction(editor, 'horizontalRule');
+                  }}
+                >
+                  <Minus size={15} />
+                  <span>Horizontal Rule</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`toolbar-more-menu-item ${state.isStrike ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    executeToolbarAction(editor, 'strike');
+                  }}
+                >
+                  <Strikethrough size={15} />
+                  <span>Strikethrough</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`toolbar-more-menu-item ${state.isCode ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    executeToolbarAction(editor, 'code');
+                  }}
+                >
+                  <Code size={15} />
+                  <span>Inline Code</span>
+                </button>
+
+                {onExportNote && (
+                  <>
+                    <div className="toolbar-more-menu-divider" />
+                    <div className="toolbar-more-menu-section-title">Export Note</div>
+                    <button
+                      type="button"
+                      className="toolbar-more-menu-item"
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        onExportNote('txt');
+                      }}
+                    >
+                      <FileDown size={15} />
+                      <span>Plain Text (.txt)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-more-menu-item"
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        onExportNote('html');
+                      }}
+                    >
+                      <FileDown size={15} />
+                      <span>HTML (.html)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-more-menu-item"
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        onExportNote('json');
+                      }}
+                    >
+                      <FileDown size={15} />
+                      <span>JSON Archive (.json)</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showLinkDialog && (
