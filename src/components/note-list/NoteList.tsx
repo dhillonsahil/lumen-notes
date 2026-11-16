@@ -282,6 +282,7 @@ export const NoteList: React.FC<NoteListProps> = ({
                       }}
                       title="Move to Trash"
                       aria-label="Move to Trash"
+                      data-testid="note-delete-btn"
                     >
                       <Trash2 size={12} />
                     </button>

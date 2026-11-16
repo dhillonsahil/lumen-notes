@@ -104,4 +104,52 @@ test.describe('Phase 4: Polished UI and Accessibility', () => {
     await page.keyboard.press('Enter');
     await expect(folderItem).toHaveClass(/is-active/);
   });
+
+  test('Right-click on editor canvas surfaces custom formatting context menu', async ({ page }) => {
+    // Select default note
+    const firstItem = page.locator('.notelist-item').first();
+    await firstItem.click();
+
+    // Right-click inside editor canvas
+    const editorCanvas = page.locator('.editor-scroll-area');
+    await editorCanvas.click({ button: 'right', position: { x: 120, y: 150 } });
+
+    // Custom context menu should appear with formatting tools
+    const contextMenu = page.locator('[data-testid="editor-context-menu"]');
+    await expect(contextMenu).toBeVisible();
+    await expect(contextMenu.locator('.context-menu-label:has-text("Bold")')).toBeVisible();
+    await expect(contextMenu.locator('.context-menu-label:has-text("Checklist")')).toBeVisible();
+
+    // Press Escape to dismiss
+    await page.keyboard.press('Escape');
+    await expect(contextMenu).not.toBeVisible();
+  });
+
+  test('Sidebar counts remain accurate and globally visible across all views', async ({ page }) => {
+    // Check initial counts in sidebar
+    const allNotesView = page.locator('[data-testid="view-all-notes"]');
+    const trashView = page.locator('[data-testid="view-trash"]');
+
+    // Initial state: 1 default demo note
+    await expect(allNotesView.locator('.sidebar-count')).toHaveText('1');
+    await expect(trashView.locator('.sidebar-count')).toHaveText('0');
+
+    // Create a new note
+    await page.locator('[aria-label="New Note"]').click();
+    await expect(allNotesView.locator('.sidebar-count')).toHaveText('2');
+    await expect(trashView.locator('.sidebar-count')).toHaveText('0');
+
+    // Delete one note to trash
+    const deleteBtn = page.locator('[data-testid="note-delete-btn"]').first();
+    await deleteBtn.click();
+
+    // Now All Notes is 1, and Trash is 1
+    await expect(allNotesView.locator('.sidebar-count')).toHaveText('1');
+    await expect(trashView.locator('.sidebar-count')).toHaveText('1');
+
+    // Switch to Trash view: All Notes count must STILL be 1, and Trash count must be 1
+    await trashView.click();
+    await expect(allNotesView.locator('.sidebar-count')).toHaveText('1');
+    await expect(trashView.locator('.sidebar-count')).toHaveText('1');
+  });
 });

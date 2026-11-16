@@ -9,10 +9,11 @@ import {
   Settings as SettingsIcon,
   NotebookPen,
 } from 'lucide-react';
-import type { Folder, NoteSummary } from '../../ipc/types';
+import type { Folder, NoteSummary, SidebarCounts } from '../../ipc/types';
 
 interface SidebarProps {
   notes: NoteSummary[];
+  counts?: SidebarCounts;
   folders: Folder[];
   activeView: 'all' | 'favorites' | 'archive' | 'trash';
   selectedFolderId: string | null;
@@ -25,6 +26,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   notes,
+  counts,
   folders,
   activeView,
   selectedFolderId,
@@ -38,11 +40,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [newFolderName, setNewFolderName] = useState('');
   const [folderError, setFolderError] = useState('');
 
-  // Counts
-  const allCount = notes.filter((n) => !n.is_deleted && !n.archived).length;
-  const favoritesCount = notes.filter((n) => !n.is_deleted && n.favorite).length;
-  const archiveCount = notes.filter((n) => !n.is_deleted && n.archived).length;
-  const trashCount = notes.filter((n) => n.is_deleted).length;
+  // Counts (Prefer accurate global counts across entire database, fallback to filtered notes)
+  const allCount = counts ? counts.all : notes.filter((n) => !n.is_deleted && !n.archived).length;
+  const favoritesCount = counts ? counts.favorites : notes.filter((n) => !n.is_deleted && n.favorite).length;
+  const archiveCount = counts ? counts.archive : notes.filter((n) => !n.is_deleted && n.archived).length;
+  const trashCount = counts ? counts.trash : notes.filter((n) => n.is_deleted).length;
 
   const handleCreateFolderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,9 +186,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <ul className="sidebar-list">
             {folders.map((folder) => {
-              const count = notes.filter(
-                (n) => n.folder_id === folder.id && !n.is_deleted
-              ).length;
+              const count = counts
+                ? (counts.folders[folder.id] ?? 0)
+                : notes.filter((n) => n.folder_id === folder.id && !n.is_deleted).length;
               const isSelected = selectedFolderId === folder.id;
 
               return (

@@ -124,6 +124,14 @@ export interface ImportResult {
   overwritten_count: number;
 }
 
+export interface SidebarCounts {
+  all: number;
+  favorites: number;
+  archive: number;
+  trash: number;
+  folders: Record<string, number>;
+}
+
 export interface ParsedNote extends Omit<Note, 'document_json'> {
   parsed_content: JSONContent;
 }

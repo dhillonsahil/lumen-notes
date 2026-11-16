@@ -1,11 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { JSONContent } from '@tiptap/core';
 import { ipcClient } from '../ipc/client';
-import type { Note, NoteSummary, Folder, NoteFilter, SaveStatus } from '../ipc/types';
+import type { Note, NoteSummary, Folder, NoteFilter, SaveStatus, SidebarCounts } from '../ipc/types';
 
 export function useNotesManager() {
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [sidebarCounts, setSidebarCounts] = useState<SidebarCounts>({
+    all: 0,
+    favorites: 0,
+    archive: 0,
+    trash: 0,
+    folders: {},
+  });
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [activeView, setActiveView] = useState<'all' | 'favorites' | 'archive' | 'trash'>('all');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -84,11 +91,46 @@ export function useNotesManager() {
     }
   }, [activeView, selectedFolderId, searchQuery, sortBy, sortOrder]);
 
+  // Load Sidebar Counts across entire database
+  const reloadCounts = useCallback(async () => {
+    try {
+      const [activeNotes, trashNotes] = await Promise.all([
+        ipcClient.listNotes({ is_trash: false, include_archived: true }),
+        ipcClient.listNotes({ is_trash: true }),
+      ]);
+
+      const foldersCount: Record<string, number> = {};
+      let all = 0;
+      let favorites = 0;
+      let archive = 0;
+
+      for (const n of activeNotes) {
+        if (!n.archived) all++;
+        if (n.favorite) favorites++;
+        if (n.archived) archive++;
+        if (n.folder_id) {
+          foldersCount[n.folder_id] = (foldersCount[n.folder_id] || 0) + 1;
+        }
+      }
+
+      setSidebarCounts({
+        all,
+        favorites,
+        archive,
+        trash: trashNotes.length,
+        folders: foldersCount,
+      });
+    } catch (err) {
+      console.error('Failed to reload sidebar counts:', err);
+    }
+  }, []);
+
   // Initial load on mount
   useEffect(() => {
     reloadFolders();
     reloadNotes();
-  }, [reloadFolders, reloadNotes]);
+    reloadCounts();
+  }, [reloadFolders, reloadNotes, reloadCounts]);
 
   // Flush any pending save immediately
   const flushPendingSave = useCallback(async () => {
@@ -246,13 +288,14 @@ export function useNotesManager() {
       setActiveNote(newNote);
       setSaveStatus('saved');
       setErrorMessage(undefined);
+      reloadCounts();
     } catch (err) {
       console.error('Failed to create note:', err);
     } finally {
       isCreatingNoteRef.current = false;
       setIsCreatingNote(false);
     }
-  }, [selectedFolderId, flushPendingSave]);
+  }, [selectedFolderId, flushPendingSave, reloadCounts]);
 
   // Note Actions
   const handleDeleteNote = useCallback(
@@ -263,11 +306,12 @@ export function useNotesManager() {
         if (activeNoteRef.current?.id === id) {
           setActiveNote(null);
         }
+        reloadCounts();
       } catch (err) {
         console.error('Failed to delete note:', err);
       }
     },
-    []
+    [reloadCounts]
   );
 
   const handleRestoreNote = useCallback(
@@ -275,11 +319,12 @@ export function useNotesManager() {
       try {
         await ipcClient.restoreNote(id);
         reloadNotes();
+        reloadCounts();
       } catch (err) {
         console.error('Failed to restore note:', err);
       }
     },
-    [reloadNotes]
+    [reloadNotes, reloadCounts]
   );
 
   const handleTogglePin = useCallback(async (id: string) => {
@@ -305,10 +350,11 @@ export function useNotesManager() {
       if (activeNoteRef.current?.id === id) {
         setActiveNote((prev) => (prev ? { ...prev, favorite: isFav } : null));
       }
+      reloadCounts();
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }
-  }, []);
+  }, [reloadCounts]);
 
   const handleToggleArchive = useCallback(
     async (id: string) => {
@@ -321,11 +367,43 @@ export function useNotesManager() {
           setActiveNote((prev) => (prev ? { ...prev, archived: isArc } : null));
         }
         reloadNotes();
+        reloadCounts();
       } catch (err) {
         console.error('Failed to toggle archive:', err);
       }
     },
-    [reloadNotes]
+    [reloadNotes, reloadCounts]
+  );
+
+  // Snapshot restoration handler without revision conflict
+  const handleSnapshotRestored = useCallback(
+    (restored: Note) => {
+      if (pendingSaveTimeoutRef.current) {
+        clearTimeout(pendingSaveTimeoutRef.current);
+        pendingSaveTimeoutRef.current = null;
+      }
+      pendingSaveDataRef.current = null;
+
+      activeNoteRef.current = restored;
+      setActiveNote(restored);
+      setSaveStatus('saved');
+      setErrorMessage(undefined);
+
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === restored.id
+            ? {
+                ...n,
+                title: restored.title,
+                plain_text_snippet: restored.plain_text.slice(0, 160),
+                revision: restored.revision,
+              }
+            : n
+        )
+      );
+      reloadCounts();
+    },
+    [reloadCounts]
   );
 
   // Folder Actions
@@ -386,6 +464,9 @@ export function useNotesManager() {
     handleToggleArchive,
     handleCreateFolder,
     handleDeleteFolder,
+    handleSnapshotRestored,
+    sidebarCounts,
+    reloadCounts,
     flushPendingSave,
     reloadNotes,
   };

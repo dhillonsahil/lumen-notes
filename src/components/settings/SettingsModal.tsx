@@ -3,6 +3,7 @@ import { X, Moon, Sun, Monitor, HardDrive, ShieldCheck, Download, Upload, Databa
 import { ipcClient } from '../../ipc/client';
 import type { AppSettings, ImportPreview, ImportResult } from '../../ipc/types';
 import { ImportPreviewModal } from '../dialogs/ImportPreviewModal';
+import { saveFileWithLocationPicker } from '../../utils/fileExport';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -58,13 +59,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleExportArchive = async () => {
     try {
       const json = await ipcClient.exportArchive();
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lumen-notes-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const filename = `lumen-notes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      await saveFileWithLocationPicker(json, filename, 'application/json', 'json');
       setStatusMessage('Notes archive exported successfully');
       setTimeout(() => setStatusMessage(null), 3500);
     } catch (err) {

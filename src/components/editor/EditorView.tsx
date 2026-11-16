@@ -5,9 +5,11 @@ import { getLumenEditorExtensions } from '../../editor/extensions';
 import { sanitizePastedHtml } from '../../editor/clipboard';
 import { extractPlainText, calculateDocumentStats } from '../../editor/document';
 import { EditorToolbar } from './EditorToolbar';
+import { EditorContextMenu } from './EditorContextMenu';
 import { SnapshotModal } from '../dialogs/SnapshotModal';
 import { ipcClient } from '../../ipc/client';
-import type { Attachment } from '../../ipc/types';
+import { saveFileWithLocationPicker } from '../../utils/fileExport';
+import type { Attachment, Note } from '../../ipc/types';
 import {
   X,
   ChevronDown,
@@ -16,6 +18,7 @@ import {
   FileText,
   Image as ImageIcon,
   Download,
+  ExternalLink,
 } from 'lucide-react';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'error';
@@ -29,6 +32,7 @@ export interface EditorViewProps {
   onContentChange?: (title: string, content: JSONContent, plainText: string) => void;
   onRetrySave?: () => void;
   onReloadNote?: () => void;
+  onSnapshotRestored?: (restored: Note) => void;
 }
 
 const DEFAULT_DOC: JSONContent = {
@@ -45,6 +49,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
   onContentChange,
   onRetrySave,
   onReloadNote,
+  onSnapshotRestored: onSnapshotRestoredProp,
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [isFindOpen, setIsFindOpen] = useState(false);
@@ -64,7 +69,11 @@ export const EditorView: React.FC<EditorViewProps> = ({
     name: string;
     url: string;
     sizeBytes?: number;
+    id?: string;
   } | null>(null);
+
+  // Custom right-click context menu state
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   // Snapshots state
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
@@ -262,24 +271,31 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   const handleOpenAttachment = async (att: Attachment) => {
     try {
-      const dataUrl = await ipcClient.getAttachmentData(att.id);
       if (att.mime_type.startsWith('image/')) {
+        const dataUrl = await ipcClient.getAttachmentData(att.id);
         setLightboxItem({
           name: att.original_name,
           url: dataUrl,
           sizeBytes: att.size_bytes,
+          id: att.id,
         });
       } else {
+        // Open file directly with OS default application (PDF reader, Word, etc.)
+        await ipcClient.openAttachment(att.id);
+      }
+    } catch (err) {
+      console.error('Failed to open attachment natively, attempting fallback:', err);
+      try {
+        const dataUrl = await ipcClient.getAttachmentData(att.id);
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = att.original_name;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+      } catch (fallbackErr) {
+        alert('Failed to open attachment: ' + (err instanceof Error ? err.message : String(err)));
       }
-    } catch (err) {
-      console.error('Failed to open attachment:', err);
-      alert('Failed to open attachment: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -304,13 +320,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
           : format === 'json'
           ? 'application/json'
           : 'text/plain';
-      const blob = new Blob([content], { type: mime });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title || 'note'}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const filename = `${title ? title.replace(/[/\\?%*:|"<>]/g, '_') : 'note'}.${format}`;
+      await saveFileWithLocationPicker(content, filename, mime, format);
     } catch (err) {
       console.error('Failed to export note:', err);
     }
@@ -533,7 +544,14 @@ export const EditorView: React.FC<EditorViewProps> = ({
         </div>
       )}
 
-      <div className="editor-scroll-area" onClick={handleScrollAreaClick}>
+      <div
+        className="editor-scroll-area"
+        onClick={handleScrollAreaClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setContextMenuPos({ x: e.clientX, y: e.clientY });
+        }}
+      >
         <div className="editor-content-wrapper">
           <input
             type="text"
@@ -544,9 +562,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
             data-testid="editor-title-input"
             aria-label="Note Title"
           />
-          <EditorContent editor={editor} data-testid="editor-content" />
 
-          {/* Attachments Section */}
+          {/* Attachments Section - positioned right below title with minimum required space */}
           {attachments.length > 0 && (
             <div className="editor-attachments" data-testid="attachments-drawer">
               {attachments.map((att) => (
@@ -594,6 +611,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
               ))}
             </div>
           )}
+
+          <EditorContent editor={editor} data-testid="editor-content" />
         </div>
       </div>
 
@@ -643,10 +662,13 @@ export const EditorView: React.FC<EditorViewProps> = ({
           onClose={() => setIsSnapshotModalOpen(false)}
           onSnapshotRestored={(restored) => {
             setTitle(restored.title);
+            isSettingContentRef.current = true;
             try {
               const json = JSON.parse(restored.document_json);
-              editor?.commands.setContent(json);
+              editor?.commands.setContent(json, { emitUpdate: false });
             } catch {}
+            isSettingContentRef.current = false;
+            onSnapshotRestoredProp?.(restored);
             onReloadNote?.();
             loadAttachments();
           }}
@@ -675,6 +697,20 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 )}
               </div>
               <div className="editor-lightbox-actions">
+                {lightboxItem.id && (
+                  <button
+                    type="button"
+                    className="editor-lightbox-btn"
+                    onClick={() => {
+                      if (lightboxItem.id) ipcClient.openAttachment(lightboxItem.id);
+                    }}
+                    title="Open in system photo viewer"
+                    aria-label="Open in system photo viewer"
+                  >
+                    <ExternalLink size={14} />
+                    <span>Open in App</span>
+                  </button>
+                )}
                 <a
                   href={lightboxItem.url}
                   download={lightboxItem.name}
@@ -704,6 +740,18 @@ export const EditorView: React.FC<EditorViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Right-Click Context Menu with Formatting Tools */}
+      {contextMenuPos && (
+        <EditorContextMenu
+          x={contextMenuPos.x}
+          y={contextMenuPos.y}
+          editor={editor}
+          onClose={() => setContextMenuPos(null)}
+          onInsertImage={() => inlineImageInputRef.current?.click()}
+          onAttachFile={() => fileInputRef.current?.click()}
+        />
       )}
     </div>
   );

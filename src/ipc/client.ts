@@ -356,6 +356,17 @@ class MockStorageAdapter {
     return `data:${att.mime_type};base64,${data}`;
   }
 
+  openAttachment(id: string): void {
+    const dataUrl = this.getAttachmentData(id);
+    const att = this.attachments.get(id);
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = att?.original_name || 'attachment';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   deleteAttachment(id: string): void {
     this.attachments.delete(id);
     this.attachmentData.delete(id);
@@ -670,6 +681,13 @@ export const ipcClient = {
       return await invoke<string>('get_attachment_data', { id });
     }
     return mockAdapter.getAttachmentData(id);
+  },
+
+  async openAttachment(id: string): Promise<void> {
+    if (isTauriEnvironment()) {
+      return await invoke<void>('open_attachment', { id });
+    }
+    mockAdapter.openAttachment(id);
   },
 
   async deleteAttachment(id: string): Promise<void> {

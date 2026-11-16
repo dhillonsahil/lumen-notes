@@ -34,6 +34,8 @@ export function App() {
     handleToggleArchive,
     handleCreateFolder,
     handleDeleteFolder,
+    handleSnapshotRestored,
+    sidebarCounts,
     flushPendingSave,
     reloadNotes,
   } = useNotesManager();
@@ -193,6 +195,7 @@ export function App() {
           >
             <Sidebar
               notes={notes}
+              counts={sidebarCounts}
               folders={folders}
               activeView={activeView}
               selectedFolderId={selectedFolderId}
@@ -310,6 +313,7 @@ export function App() {
               onContentChange={handleContentChange}
               onRetrySave={flushPendingSave}
               onReloadNote={reloadNotes}
+              onSnapshotRestored={handleSnapshotRestored}
             />
           ) : (
             <div

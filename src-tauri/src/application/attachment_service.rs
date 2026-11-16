@@ -145,4 +145,49 @@ impl AttachmentService {
             Ok(false)
         }
     }
+
+    pub fn open_attachment(&self, id: &str) -> Result<(), AppError> {
+        let attachment = self
+            .storage
+            .with_conn(|conn| AttachmentRepository::get(conn, id))?
+            .ok_or_else(|| AppError::NotFound(format!("Attachment '{}' not found", id)))?;
+
+        let ext = Path::new(&attachment.relative_storage_path)
+            .extension()
+            .and_then(|s| s.to_str())
+            .unwrap_or("bin");
+        let safe_filename = format!("{}.{}", attachment.id, ext);
+        let path = self.attachments_dir.join(safe_filename);
+
+        if !path.exists() {
+            return Err(AppError::NotFound("Attachment file not found on disk".to_string()));
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            std::process::Command::new("cmd")
+                .args(["/C", "start", "", &path.to_string_lossy()])
+                .creation_flags(CREATE_NO_WINDOW)
+                .spawn()
+                .map_err(|e| AppError::IoError(format!("Failed to open file: {}", e)))?;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            std::process::Command::new("xdg-open")
+                .arg(&path)
+                .spawn()
+                .map_err(|e| AppError::IoError(format!("Failed to open file: {}", e)))?;
+        }
+        #[cfg(target_os = "macos")]
+        {
+            std::process::Command::new("open")
+                .arg(&path)
+                .spawn()
+                .map_err(|e| AppError::IoError(format!("Failed to open file: {}", e)))?;
+        }
+
+        Ok(())
+    }
 }

@@ -267,6 +267,16 @@ pub fn delete_attachment(
 }
 
 #[tauri::command]
+pub fn open_attachment(
+    attachments: State<Arc<AttachmentService>>,
+    id: String,
+) -> Result<(), String> {
+    attachments
+        .open_attachment(&id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn export_note(
     storage: State<Arc<StorageManager>>,
     exchange: State<Arc<ExchangeService>>,

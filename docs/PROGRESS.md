@@ -24,12 +24,13 @@
 ---
 
 ## Post-Phase Enhancements & UX Refinements (Verified)
-1. **Borderless Writing Canvas**: Removed focus rectangles and yellow outline borders from `.editor-title-input`, `.tiptap`, `.ProseMirror`, and content areas using targeted CSS overrides while preserving keyboard accessibility rings on interactive buttons.
+1. **Borderless Writing Canvas**: Removed focus rectangles and outline borders from `.editor-title-input`, `.tiptap`, `.ProseMirror`, and content areas using targeted CSS overrides while preserving keyboard accessibility rings on interactive buttons.
 2. **100% Canvas Height & Click-to-Focus**: Expanded `.editor-scroll-area`, `.editor-content-wrapper`, and `.tiptap` to stretch to 100% canvas height. Clicking any empty space on the scroll canvas automatically focuses the editor at the end of the text.
-3. **Browser Context Menu Suppression**: Disabled default webview browser right-click menu (Print, Save as, Reload, Inspect) across the application window.
-4. **Inline Image Insertion**: Configured `@tiptap/extension-image` with direct toolbar image insertion and clipboard image pasting inline into the rich-text note body.
-5. **Interactive Attachment Viewer & Lightbox**:
-   - Clicking an image attachment chip or inline image opens a full-resolution Lightbox Viewer with download/save action and keyboard `Escape` dismissal.
-   - Clicking non-image attachment chips initiates system download/open.
-   - Stop-propagation prevents deletion buttons from triggering attachment preview.
-6. **Automated Verification**: Added Playwright E2E coverage for inline image insertion, attachment opening in lightbox viewer, and click-to-focus on canvas. 23 Playwright E2E tests, 13 Vitest unit tests, and 7 Rust backend integration tests all pass.
+3. **Global Sidebar Counts Independent of Active View**: Decoupled sidebar counts from the filtered note list view. Replaced filtered count estimation with global multi-query aggregation (`reloadCounts`), ensuring All Notes, Favorites, Archive, Trash, and custom folder badges always show accurate database totals regardless of the active view.
+4. **Version Snapshot Restore Conflict Resolution**: Fixed the snapshot restore revision conflict error (`Conflict: expected revision 14, but current is 15`) by setting content with `{ emitUpdate: false }`, cancelling pending debounced autosaves, and immediately committing the restored revision to state and local refs.
+5. **Compact Attachment Drawer & Native OS App Launching**:
+   - Relocated the `.editor-attachments` section to sit directly below the note title input and above the editor canvas with natural minimum height, preventing attachments from being pushed below empty space.
+   - Added `open_attachment` Tauri backend command executing `cmd /C start` (Windows) or `xdg-open` (Linux). Clicking any non-image attachment chip directly opens the file in its default OS viewer (Acrobat, Word, Excel, VLC, etc.). Images open seamlessly in the interactive Lightbox.
+6. **Export Destination Folder Picker**: Replaced blind browser downloads with the native File System Access API (`window.showSaveFilePicker`). Users can now browse and select the exact folder location and filename when exporting individual notes (Markdown, HTML, Plain Text, JSON) or full workspace backup archives.
+7. **Custom macOS Notes-Style Context Menu**: Intercepted right-click events in the writing canvas and selection areas to present a tailored context menu with quick tools: Bold, Italic, Strikethrough, Code, Headings (H1/H2/H3), Bulleted & Numbered Lists, Task Lists, Blockquotes, Link insertion, Inline Image insertion, File Attachment, and Clipboard operations (Cut, Copy, Paste).
+8. **Automated Verification**: Vitest (13/13 unit tests passed), Rust (`cargo test`, 7/7 passed), Playwright E2E in real browser (25/25 passed including right-click context menu and global sidebar count synchronization), and Tauri packaging (`npx tauri build`, 0 errors, release MSI and NSIS installers generated).

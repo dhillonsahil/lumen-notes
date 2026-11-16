@@ -424,14 +424,14 @@
   background-color: var(--color-danger);
 }
 
-/* Attachments Drawer */
+/* Attachments Tray - positioned right beneath Title with compact natural height */
 .editor-attachments {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 12px 0 16px 0;
-  border-top: 1px solid var(--color-divider);
-  margin-top: 24px;
+  padding: 4px 0 14px 0;
+  border-bottom: 1px solid var(--color-divider);
+  margin-bottom: 20px;
 }
 
 .attachment-chip {
@@ -608,4 +608,86 @@
   object-fit: contain;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
+}
+
+/* Custom Right-Click Context Menu */
+.editor-context-menu {
+  position: fixed;
+  z-index: 1200;
+  width: 220px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  animation: contextMenuFadeIn 0.1s ease-out;
+  user-select: none;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.context-menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-metadata);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+}
+
+.context-menu-item:hover:not(:disabled) {
+  background-color: var(--color-hover);
+  color: var(--color-accent);
+}
+
+.context-menu-item.is-active {
+  background-color: var(--color-selection);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.context-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.context-menu-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.context-menu-shortcut {
+  font-size: 10px;
+  color: var(--color-secondary);
+  font-family: var(--font-mono);
+}
+
+.context-menu-divider {
+  height: 1px;
+  background-color: var(--color-divider);
+  margin: 4px 0;
 }

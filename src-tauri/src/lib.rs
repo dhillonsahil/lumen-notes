@@ -63,6 +63,7 @@ pub fn run() {
             commands::add_attachment,
             commands::list_attachments,
             commands::get_attachment_data,
+            commands::open_attachment,
             commands::delete_attachment,
             commands::export_note,
             commands::export_archive,
