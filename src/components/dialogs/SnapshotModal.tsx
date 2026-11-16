@@ -45,8 +45,12 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
 
   const handleCreateSnapshot = async () => {
     try {
-      await ipcClient.createSnapshot(noteId);
-      setSuccessMessage('Snapshot created successfully');
+      const snap = await ipcClient.createSnapshot(noteId);
+      if (snap.is_new) {
+        setSuccessMessage('Snapshot created successfully');
+      } else {
+        setSuccessMessage('No changes to save — snapshot already up to date');
+      }
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadSnapshots();
     } catch (err) {

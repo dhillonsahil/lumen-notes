@@ -171,15 +171,58 @@ fn test_snapshot_creation_and_restore() {
         &storage,
         &note.id,
         "Snapshot Title",
-        r#"{"type":"doc","content":[{"type":"paragraph"}]}"#,
+        r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Initial body"}]}]}"#,
         1,
     )
     .unwrap();
     assert_eq!(snap.title, "Snapshot Title");
+    assert!(snap.is_new);
 
     // List snapshots
     let snaps = BackupService::list_snapshots(&storage, &note.id).unwrap();
     assert_eq!(snaps.len(), 1);
+
+    // Creating snapshot with identical content must not create a duplicate
+    let duplicate = BackupService::create_snapshot(
+        &storage,
+        &note.id,
+        "Snapshot Title",
+        r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Initial body"}]}]}"#,
+        1,
+    )
+    .unwrap();
+    assert_eq!(duplicate.id, snap.id);
+    assert!(!duplicate.is_new);
+    let snaps_after_dup = BackupService::list_snapshots(&storage, &note.id).unwrap();
+    assert_eq!(snaps_after_dup.len(), 1);
+
+    // Creating snapshot with only trailing whitespace in title and body must not create a duplicate
+    let whitespace_dup = BackupService::create_snapshot(
+        &storage,
+        &note.id,
+        "Snapshot Title   ",
+        r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Initial body   "}]},{"type":"paragraph"}]}"#,
+        1,
+    )
+    .unwrap();
+    assert_eq!(whitespace_dup.id, snap.id);
+    assert!(!whitespace_dup.is_new);
+    let snaps_after_ws = BackupService::list_snapshots(&storage, &note.id).unwrap();
+    assert_eq!(snaps_after_ws.len(), 1);
+
+    // Changing content creates a new snapshot
+    let changed = BackupService::create_snapshot(
+        &storage,
+        &note.id,
+        "Snapshot Title Changed",
+        r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Updated body"}]}]}"#,
+        2,
+    )
+    .unwrap();
+    assert_ne!(changed.id, snap.id);
+    assert!(changed.is_new);
+    let snaps_after_change = BackupService::list_snapshots(&storage, &note.id).unwrap();
+    assert_eq!(snaps_after_change.len(), 2);
 
     // Restore snapshot
     let restored = BackupService::restore_snapshot(&storage, &snap.id).unwrap();

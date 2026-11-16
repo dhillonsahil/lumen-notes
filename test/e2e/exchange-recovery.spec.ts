@@ -236,7 +236,7 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     await expect(page.locator('.ProseMirror-focused')).toBeVisible();
   });
 
-  test('Ctrl+S manual save triggers snapshot creation and displays toast notification', async ({ page }) => {
+  test('Ctrl+S manual save triggers snapshot creation and deduplicates identical saves or trailing spaces', async ({ page }) => {
     // Select default note
     const firstItem = page.locator('.notelist-item').first();
     await firstItem.click();
@@ -245,11 +245,26 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     await page.locator('.ProseMirror').click();
     await page.keyboard.type(' Important milestone update.');
 
-    // Press Ctrl+S
+    // 1. First Ctrl+S creates a snapshot
     await page.keyboard.press('Control+s');
-
-    // Verify snapshot toast appears
     const toast = page.locator('[data-testid="snapshot-toast"]');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Snapshot saved');
+
+    // 2. Second Ctrl+S with no changes must notify that snapshot is already up to date
+    await page.keyboard.press('Control+s');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('already up to date');
+
+    // 3. Adding trailing spaces and saving must also deduplicate without creating a redundant snapshot
+    await page.keyboard.type('     ');
+    await page.keyboard.press('Control+s');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('already up to date');
+
+    // 4. Typing a real character must create a new snapshot
+    await page.keyboard.type('New character added');
+    await page.keyboard.press('Control+s');
     await expect(toast).toBeVisible();
     await expect(toast).toContainText('Snapshot saved');
   });

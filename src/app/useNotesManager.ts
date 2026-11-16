@@ -332,16 +332,21 @@ export function useNotesManager() {
   const handleTogglePin = useCallback(async (id: string) => {
     try {
       const isPinned = await ipcClient.togglePin(id);
-      setNotes((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, pinned: isPinned } : n))
-      );
+      setNotes((prev) => {
+        const updated = prev.map((n) => (n.id === id ? { ...n, pinned: isPinned } : n));
+        return [...updated].sort((a, b) => {
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+          return 0;
+        });
+      });
       if (activeNoteRef.current?.id === id) {
         setActiveNote((prev) => (prev ? { ...prev, pinned: isPinned } : null));
       }
+      await reloadNotes();
     } catch (err) {
       console.error('Failed to toggle pin:', err);
     }
-  }, []);
+  }, [reloadNotes]);
 
   const handleToggleFavorite = useCallback(async (id: string) => {
     try {
@@ -451,9 +456,13 @@ export function useNotesManager() {
     const currentNoteId = activeNoteRef.current?.id || active.id;
     try {
       setSaveStatus('saving');
-      await ipcClient.createSnapshot(currentNoteId);
+      const snap = await ipcClient.createSnapshot(currentNoteId);
       setSaveStatus('saved');
-      setSnapshotToastMessage('Snapshot saved to Version History');
+      if (snap.is_new) {
+        setSnapshotToastMessage('Snapshot saved to Version History');
+      } else {
+        setSnapshotToastMessage('No changes to save — snapshot already up to date');
+      }
       setTimeout(() => setSnapshotToastMessage(null), 3000);
     } catch (err: unknown) {
       console.error('Failed to create snapshot on manual save:', err);

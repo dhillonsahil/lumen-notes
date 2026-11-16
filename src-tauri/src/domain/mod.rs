@@ -102,6 +102,8 @@ pub struct Snapshot {
     pub title: String,
     pub created_at: String,
     pub revision: i64,
+    #[serde(default)]
+    pub is_new: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

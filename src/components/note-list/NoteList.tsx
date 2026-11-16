@@ -187,53 +187,68 @@ export const NoteList: React.FC<NoteListProps> = ({
       </div>
 
       <div className="notelist-items" role="listbox" aria-label="Notes List">
-        {notes.map((note, index) => {
-          const isSelected = activeNoteId === note.id;
-          const displayTitle = getDisplayTitle(note);
+        {(() => {
+          const hasPinned = notes.some((n) => n.pinned);
+          return notes.map((note, index) => {
+            const isSelected = activeNoteId === note.id;
+            const displayTitle = getDisplayTitle(note);
+            const showPinnedHeader = hasPinned && index === 0 && note.pinned;
+            const showNotesHeader =
+              hasPinned && !note.pinned && (index === 0 || notes[index - 1]?.pinned);
 
-          const handleItemKeyDown = (e: React.KeyboardEvent) => {
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              const nextIndex = Math.min(notes.length - 1, index + 1);
-              const nextEl = document.querySelector<HTMLElement>(
-                `[data-testid="notelist-item-${notes[nextIndex].id}"]`
-              );
-              nextEl?.focus();
-              onSelectNote(notes[nextIndex].id);
-            } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              const prevIndex = Math.max(0, index - 1);
-              const prevEl = document.querySelector<HTMLElement>(
-                `[data-testid="notelist-item-${notes[prevIndex].id}"]`
-              );
-              prevEl?.focus();
-              onSelectNote(notes[prevIndex].id);
-            } else if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onSelectNote(note.id);
-            } else if (e.key === 'Delete' || e.key === 'Backspace') {
-              // Delete key to trash or permanently delete
-              e.preventDefault();
-              if (activeView === 'trash') {
-                setDeleteModalState({ isOpen: true, noteId: note.id, permanent: true });
-              } else {
-                onDeleteNote(note.id, false);
+            const handleItemKeyDown = (e: React.KeyboardEvent) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = Math.min(notes.length - 1, index + 1);
+                const nextEl = document.querySelector<HTMLElement>(
+                  `[data-testid="notelist-item-${notes[nextIndex].id}"]`
+                );
+                nextEl?.focus();
+                onSelectNote(notes[nextIndex].id);
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = Math.max(0, index - 1);
+                const prevEl = document.querySelector<HTMLElement>(
+                  `[data-testid="notelist-item-${notes[prevIndex].id}"]`
+                );
+                prevEl?.focus();
+                onSelectNote(notes[prevIndex].id);
+              } else if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectNote(note.id);
+              } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                // Delete key to trash or permanently delete
+                e.preventDefault();
+                if (activeView === 'trash') {
+                  setDeleteModalState({ isOpen: true, noteId: note.id, permanent: true });
+                } else {
+                  onDeleteNote(note.id, false);
+                }
               }
-            }
-          };
+            };
 
-          return (
-            <div
-              key={note.id}
-              role="option"
-              tabIndex={0}
-              aria-selected={isSelected}
-              className={`notelist-item ${isSelected ? 'is-selected' : ''}`}
-              onClick={() => onSelectNote(note.id)}
-              onKeyDown={handleItemKeyDown}
-              title={displayTitle}
-              data-testid={`notelist-item-${note.id}`}
-            >
+            return (
+              <React.Fragment key={note.id}>
+                {showPinnedHeader && (
+                  <div className="notelist-section-header" data-testid="notelist-header-pinned">
+                    Pinned
+                  </div>
+                )}
+                {showNotesHeader && (
+                  <div className="notelist-section-header" data-testid="notelist-header-notes">
+                    Notes
+                  </div>
+                )}
+                <div
+                  role="option"
+                  tabIndex={0}
+                  aria-selected={isSelected}
+                  className={`notelist-item ${isSelected ? 'is-selected' : ''}`}
+                  onClick={() => onSelectNote(note.id)}
+                  onKeyDown={handleItemKeyDown}
+                  title={displayTitle}
+                  data-testid={`notelist-item-${note.id}`}
+                >
               <div className="notelist-item-header">
                 <span className="notelist-item-title">{displayTitle}</span>
                 <div className="notelist-item-badges">
@@ -343,8 +358,10 @@ export const NoteList: React.FC<NoteListProps> = ({
                 )}
               </div>
             </div>
-          );
-        })}
+          </React.Fragment>
+        );
+      });
+    })()}
 
         {notes.length === 0 && (
           <div className="notelist-empty">

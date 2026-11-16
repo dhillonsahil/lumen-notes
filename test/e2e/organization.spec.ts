@@ -31,19 +31,28 @@ test.describe('Phase 3: Organization and Search E2E', () => {
     const newNoteBtn = page.locator('[data-testid="notelist-new-note-btn"]');
     await newNoteBtn.click();
     const titleInput = page.locator('[data-testid="editor-title-input"]');
-    await titleInput.fill('Regular Note');
+    await titleInput.fill('First Created Note');
 
-    // Create Note 2
+    // Create Note 2 (which becomes newest and surfaces above Note 1)
     await newNoteBtn.click();
-    await titleInput.fill('Special Pinned Note');
+    await titleInput.fill('Second Created Note');
 
-    // Pin Note 2
-    const pinBtn = page.locator('.notelist-item', { hasText: 'Special Pinned Note' }).locator('button[title="Pin to top"]');
+    // Verify Second Created Note is on top initially
+    await expect(page.locator('.notelist-item-title').first()).toHaveText('Second Created Note');
+
+    // Pin First Created Note (which is currently second in the list)
+    const pinBtn = page.locator('.notelist-item', { hasText: 'First Created Note' }).locator('button[title="Pin to top"]');
     await pinBtn.click();
 
-    // First item in the list must now be the pinned note
+    // First item in the list must now immediately be First Created Note
     const firstItemTitle = page.locator('.notelist-item-title').first();
-    await expect(firstItemTitle).toHaveText('Special Pinned Note');
+    await expect(firstItemTitle).toHaveText('First Created Note');
+    await expect(page.locator('[data-testid="notelist-header-pinned"]')).toBeVisible();
+
+    // Unpin First Created Note and verify it moves back below Second Created Note
+    const unpinBtn = page.locator('.notelist-item', { hasText: 'First Created Note' }).locator('button[title="Unpin"]');
+    await unpinBtn.click();
+    await expect(page.locator('.notelist-item-title').first()).toHaveText('Second Created Note');
   });
 
   test('Favorite note adds to Favorites view', async ({ page }) => {

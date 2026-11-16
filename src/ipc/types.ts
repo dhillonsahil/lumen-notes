@@ -91,6 +91,7 @@ export interface Snapshot {
   title: string;
   created_at: string;
   revision: number;
+  is_new?: boolean;
 }
 
 export interface Attachment {

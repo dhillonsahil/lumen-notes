@@ -31,6 +31,7 @@ impl SnapshotRepository {
             document_version,
             created_at: now,
             revision,
+            is_new: true,
         })
     }
 
@@ -52,6 +53,7 @@ impl SnapshotRepository {
                 document_version: row.get(4)?,
                 created_at: row.get(5)?,
                 revision: row.get(6)?,
+                is_new: false,
             });
         }
 
@@ -74,6 +76,7 @@ impl SnapshotRepository {
                 document_version: row.get(4)?,
                 created_at: row.get(5)?,
                 revision: row.get(6)?,
+                is_new: false,
             }))
         } else {
             Ok(None)

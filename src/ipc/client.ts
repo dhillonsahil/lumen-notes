@@ -137,7 +137,15 @@ class MockStorageAdapter {
 
     list.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      return new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime();
+      const order = filter.sort_order === 'asc' ? 1 : -1;
+      if (filter.sort_by === 'title') {
+        return a.title.localeCompare(b.title) * order;
+      }
+      if (filter.sort_by === 'created_at') {
+        return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * order;
+      }
+      const diff = new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime();
+      return filter.sort_order === 'asc' ? -diff : diff;
     });
 
     return list;
@@ -288,19 +296,90 @@ class MockStorageAdapter {
     return this.snapshots.get(noteId) || [];
   }
 
+  private isSnapshotContentIdentical(
+    latest: Snapshot,
+    newTitle: string,
+    newDocJson: string
+  ): boolean {
+    if (latest.title.trimEnd() !== newTitle.trimEnd()) {
+      return false;
+    }
+    if (latest.document_json.trimEnd() === newDocJson.trimEnd()) {
+      return true;
+    }
+    try {
+      const docA = JSON.parse(latest.document_json);
+      const docB = JSON.parse(newDocJson);
+      this.normalizeDocJson(docA);
+      this.normalizeDocJson(docB);
+      return JSON.stringify(docA) === JSON.stringify(docB);
+    } catch {
+      return false;
+    }
+  }
+
+  private normalizeDocJson(node: any): void {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node.content)) {
+      for (const child of node.content) {
+        this.normalizeDocJson(child);
+      }
+      while (node.content.length > 0) {
+        const last = node.content[node.content.length - 1];
+        if (this.isEmptyOrWhitespaceNode(last)) {
+          node.content.pop();
+        } else {
+          break;
+        }
+      }
+      if (node.content.length > 0) {
+        const last = node.content[node.content.length - 1];
+        this.trimEndLastTextNode(last);
+      }
+    }
+  }
+
+  private isEmptyOrWhitespaceNode(node: any): boolean {
+    if (!node || typeof node !== 'object') return false;
+    if (node.type === 'paragraph') {
+      if (!node.content || node.content.length === 0) return true;
+      return node.content.every((child: any) => this.isEmptyOrWhitespaceNode(child));
+    }
+    if (node.type === 'text') {
+      return !node.text || node.text.trim().length === 0;
+    }
+    return false;
+  }
+
+  private trimEndLastTextNode(node: any): void {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node.content) && node.content.length > 0) {
+      this.trimEndLastTextNode(node.content[node.content.length - 1]);
+    } else if (typeof node.text === 'string') {
+      node.text = node.text.trimEnd();
+    }
+  }
+
   createSnapshot(noteId: string): Snapshot {
     const note = this.notes.get(noteId);
     if (!note) throw new Error(`Note ${noteId} not found`);
+
+    const list = this.snapshots.get(noteId) || [];
+    const latest = list[0];
+    if (latest && this.isSnapshotContentIdentical(latest, note.title, note.document_json)) {
+      return { ...latest, is_new: false };
+    }
+
     const snap: Snapshot = {
-      id: `snap-${Date.now()}`,
+      id: `snap-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       note_id: noteId,
       title: note.title,
       document_json: note.document_json,
       document_version: note.document_version,
       created_at: new Date().toISOString(),
       revision: note.revision,
+      is_new: true,
     };
-    const list = this.snapshots.get(noteId) || [];
     list.unshift(snap);
     this.snapshots.set(noteId, list);
     return snap;
