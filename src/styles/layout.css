@@ -1,0 +1,108 @@
+/* App Shell Layout */
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-main-bg);
+  color: var(--color-text);
+  user-select: none;
+}
+
+/* Sidebar Pane */
+.pane-sidebar {
+  width: var(--sidebar-width, var(--sidebar-default-width));
+  min-width: var(--sidebar-min-width);
+  max-width: var(--sidebar-max-width);
+  height: 100%;
+  background-color: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Note List Pane */
+.pane-notelist {
+  width: var(--notelist-width, var(--notelist-default-width));
+  min-width: var(--notelist-min-width);
+  max-width: var(--notelist-max-width);
+  height: 100%;
+  background-color: var(--color-main-bg);
+  border-right: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Editor Pane */
+.pane-editor {
+  flex: 1 1 0;
+  min-width: 320px;
+  height: 100%;
+  background-color: var(--color-editor-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Resize Dividers */
+.resize-divider {
+  width: 4px;
+  margin-left: -2px;
+  margin-right: -2px;
+  z-index: 20;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.resize-divider:hover,
+.resize-divider.is-resizing {
+  background-color: var(--color-accent);
+}
+
+/* Top Headers */
+.pane-header {
+  height: var(--header-height);
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.pane-header-title {
+  font-size: var(--font-size-sidebar);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Scrollable Pane Body */
+.pane-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Responsive Behavior */
+@media (max-width: 1099px) {
+  .pane-sidebar.is-collapsed {
+    display: none;
+  }
+}
+
+@media (max-width: 799px) {
+  .pane-notelist.is-hidden-mobile {
+    display: none;
+  }
+  .pane-editor.is-hidden-mobile {
+    display: none;
+  }
+  .pane-sidebar {
+    display: none;
+  }
+}

@@ -1,0 +1,205 @@
+.notelist-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-main-bg);
+  color: var(--color-text);
+  user-select: none;
+}
+
+.notelist-header {
+  height: var(--header-height);
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-divider);
+  gap: 8px;
+}
+
+.notelist-search-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notelist-search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--color-secondary);
+  pointer-events: none;
+}
+
+.notelist-search-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px 0 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  font-size: var(--font-size-sidebar);
+  outline: none;
+}
+
+.notelist-search-input:focus {
+  border-color: var(--color-accent);
+  background-color: var(--color-main-bg);
+}
+
+.notelist-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notelist-new-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.notelist-new-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.notelist-new-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.notelist-sort-select {
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background-color: transparent;
+  color: var(--color-secondary);
+  font-size: var(--font-size-metadata);
+  padding: 0 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.notelist-sort-select:hover {
+  color: var(--color-text);
+}
+
+/* Scrollable Note Items List */
+.notelist-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notelist-item {
+  height: var(--row-height-notelist);
+  min-height: var(--row-height-notelist);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-divider);
+  transition: background-color 0.12s ease;
+  position: relative;
+}
+
+.notelist-item:hover {
+  background-color: var(--color-hover);
+}
+
+.notelist-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  background-color: var(--color-hover);
+}
+
+.notelist-item.is-selected {
+  background-color: var(--color-selection);
+}
+
+.notelist-item.is-selected .notelist-item-title {
+  color: var(--color-accent);
+}
+
+.notelist-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notelist-item-title {
+  font-size: var(--font-size-sidebar);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.notelist-item-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.badge-icon {
+  color: var(--color-accent);
+}
+
+.notelist-item-meta {
+  font-size: var(--font-size-metadata);
+  color: var(--color-secondary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notelist-item-snippet {
+  font-size: var(--font-size-preview);
+  color: var(--color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.notelist-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: var(--color-secondary);
+  text-align: center;
+  gap: 8px;
+}
+
+.notelist-empty-title {
+  font-size: var(--font-size-sidebar);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.notelist-empty-desc {
+  font-size: var(--font-size-metadata);
+  max-width: 200px;
+}
