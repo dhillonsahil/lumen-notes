@@ -54,3 +54,4 @@
     - **Wide / Full Screen (`>= 940px`)**: All tools fit natively on the toolbar; the 3-dot More button is cleanly hidden (`showMoreButton = false`), resolving toolbar clutter when all options are present.
     - **Compact Window (`700px - 940px`)**: Secondary formatting and export collapse into the 3-dot menu.
     - **Narrow / Small Window (`< 700px`)**: Lists, Find, and secondary media collapse into the 3-dot menu so no toolbar items overflow or get clipped offscreen.
+26. **Sponsor Links & Heart Sponsor Button**: Added a dedicated "Support & Sponsor" section to `SettingsModal` linking directly to Buy Me a Coffee (`https://buymeacoffee.com/isahildhillon`) and the GitHub repository (`https://github.com/dhillonsahil/lumen-notes`), and added an interactive Sponsor button with a heart icon in the sidebar footer right next to Settings.

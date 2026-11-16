@@ -8,9 +8,11 @@ import {
   Plus,
   Settings as SettingsIcon,
   PanelLeftClose,
+  Heart,
 } from 'lucide-react';
 import type { Folder, NoteSummary, SidebarCounts } from '../../ipc/types';
 import { ConfirmModal } from '../dialogs/ConfirmModal';
+import { openExternalUrl } from '../../utils/openUrl';
 
 interface SidebarProps {
   notes: NoteSummary[];
@@ -268,6 +270,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <SettingsIcon size={16} />
           <span>Settings</span>
+        </button>
+
+        <button
+          type="button"
+          className="sidebar-footer-btn sidebar-sponsor-btn"
+          onClick={() => openExternalUrl('https://buymeacoffee.com/isahildhillon')}
+          title="Sponsor Lumen Notes / Buy Me a Coffee"
+          aria-label="Sponsor Lumen Notes"
+          data-testid="sidebar-sponsor-btn"
+        >
+          <Heart size={15} fill="#EF4444" color="#EF4444" />
+          <span>Sponsor</span>
         </button>
       </div>
 

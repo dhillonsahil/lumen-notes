@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Moon, Sun, Monitor, HardDrive, ShieldCheck, Download, Upload, Database, History } from 'lucide-react';
+import { X, Moon, Sun, Monitor, HardDrive, ShieldCheck, Download, Upload, Database, History, Heart, Coffee } from 'lucide-react';
 import { ipcClient } from '../../ipc/client';
 import type { AppSettings, ImportPreview, ImportResult } from '../../ipc/types';
 import { ImportPreviewModal } from '../dialogs/ImportPreviewModal';
 import { saveFileWithLocationPicker } from '../../utils/fileExport';
+import { openExternalUrl } from '../../utils/openUrl';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -412,6 +413,97 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 data-testid="settings-storage-path"
               >
                 {dataPath}
+              </div>
+            </div>
+
+            {/* Support & Sponsor Project */}
+            <div>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Heart size={15} fill="#EF4444" color="#EF4444" />
+                <span>Support & Sponsor Project</span>
+              </div>
+              <div
+                style={{
+                  padding: '14px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--color-hover)',
+                  border: '1px solid var(--color-divider)',
+                  fontSize: '12px',
+                  lineHeight: '1.5',
+                  color: 'var(--color-text)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+                data-testid="settings-sponsor-section"
+              >
+                <div>
+                  Lumen Notes is an independent, 100% free and open-source desktop app crafted with care. If you enjoy using it for your daily writing and productivity, please consider supporting the project!
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => openExternalUrl('https://buymeacoffee.com/isahildhillon')}
+                    style={{
+                      flex: 1,
+                      minWidth: '150px',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      backgroundColor: '#FFDD00',
+                      color: '#000000',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    }}
+                    data-testid="settings-buymeacoffee-btn"
+                  >
+                    <Coffee size={15} color="#000000" />
+                    <span>Buy Me a Coffee</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openExternalUrl('https://github.com/dhillonsahil/lumen-notes')}
+                    style={{
+                      flex: 1,
+                      minWidth: '150px',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-divider)',
+                      backgroundColor: 'var(--color-main-bg)',
+                      color: 'var(--color-text)',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                    data-testid="settings-github-sponsor-btn"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    <span>GitHub Sponsor & Star</span>
+                  </button>
+                </div>
               </div>
             </div>
 
