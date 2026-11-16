@@ -2,6 +2,26 @@
 
 A polished, offline-first desktop notes application built with Tauri v2, Rust 2024, React 19, TypeScript (strict checking), and local SQLite. Features a macOS Notes–style three-pane interface and direct rich-text editing powered by Tiptap/ProseMirror.
 
+<p align="center">
+  <img src="docs/screenshots/main-editor-dark.png" alt="Lumen Notes Workspace" width="100%" />
+</p>
+
+---
+
+## Screenshots
+
+<div align="center">
+
+| Version History & Snapshots | Preferences & Support |
+|:---:|:---:|
+| <img src="docs/screenshots/version-history.png" alt="Version History Modal" width="420" /> | <img src="docs/screenshots/preferences.png" alt="Preferences Modal" width="420" /> |
+
+| Instant Note Pinning with Visual Section Headers |
+|:---:|
+| <img src="docs/screenshots/pinned-notes.png" alt="Pinned Notes" width="380" /> |
+
+</div>
+
 ---
 
 ## Key Features
@@ -82,12 +102,12 @@ npx tauri build
 
 ---
 
-## Build Output Artifacts
+## Release Installers & Artifacts
 
-Running `npx tauri build` produces:
-- **Standalone Windows Executable**: `src-tauri/target/release/lumen-notes.exe` (~6.32 MB)
-- **Windows NSIS Installer**: `src-tauri/target/release/bundle/nsis/Lumen Notes_0.1.0_x64-setup.exe` (~2.31 MB)
-- **Windows MSI Installer**: `src-tauri/target/release/bundle/msi/Lumen Notes_0.1.0_x64_en-US.msi` (~4.08 MB)
+Pre-built binaries are automatically built by GitHub Actions and available on the [Releases](https://github.com/dhillonsahil/lumen-notes/releases) page:
+- **Windows**: `.exe` (NSIS setup installer) and `.msi` (Windows Installer)
+- **Linux**: `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL), and `.AppImage` (standalone portable)
+- **macOS**: `.dmg` (Universal binary supporting Apple Silicon & Intel)
 
 ---
 
