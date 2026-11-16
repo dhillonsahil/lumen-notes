@@ -99,25 +99,41 @@
 }
 
 .notelist-sort-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   height: 28px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-divider);
-  background-color: var(--color-main-bg);
+  background-color: var(--color-hover);
   color: var(--color-text);
   font-size: var(--font-size-metadata);
-  padding: 0 4px;
+  padding: 0 22px 0 8px;
+  background-image: var(--select-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 11px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.12s ease;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 
 .notelist-sort-select:hover {
+  background-color: var(--color-selection);
   border-color: var(--color-accent);
+}
+
+.notelist-sort-select:focus,
+.notelist-sort-select:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  outline: none;
 }
 
 .notelist-sort-select option {
   background-color: var(--color-main-bg);
   color: var(--color-text);
+  padding: 4px 8px;
 }
 
 .notelist-sort-order-btn {

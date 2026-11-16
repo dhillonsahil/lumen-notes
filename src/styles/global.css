@@ -50,8 +50,34 @@ input, textarea, select {
   font-family: inherit;
 }
 
+/* Cross-platform reset for form controls so WebKitGTK/Linux & WebKit/Blink render cleanly */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  background-image: var(--select-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 11px;
+  font-family: inherit;
+}
+
+select option {
+  background-color: var(--color-main-bg);
+  color: var(--color-text);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--color-accent);
+}
+
 /* Accessible focus ring for keyboard navigation */
-:focus-visible:not(.editor-title-input):not(.ProseMirror):not(.tiptap):not([contenteditable="true"]) {
+:focus-visible:not(.editor-title-input):not(.ProseMirror):not(.tiptap):not([contenteditable="true"]):not(select) {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
@@ -59,11 +85,17 @@ input, textarea, select {
 /* Ensure interactive elements have smooth transitions and clear outlines */
 button:focus-visible,
 input:focus-visible:not(.editor-title-input),
-select:focus-visible,
 [role="option"]:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
+}
+
+select:focus,
+select:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
 }
 
 /* Seamless borderless writing surface for macOS Notes aesthetic */

@@ -67,29 +67,75 @@
 }
 
 .toolbar-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   height: 30px;
-  background-color: transparent;
+  background-color: var(--color-hover);
   color: var(--color-text);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm);
-  padding: 0 8px;
+  padding: 0 24px 0 8px;
+  background-image: var(--select-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 11px;
   font-size: var(--font-size-sidebar);
   cursor: pointer;
   outline: none;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 
 .toolbar-select:hover {
-  background-color: var(--color-hover);
-}
-
-.toolbar-select:focus {
+  background-color: var(--color-selection);
   border-color: var(--color-accent);
 }
 
+.toolbar-select:focus,
+.toolbar-select:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  outline: none;
+}
+
+.toolbar-export-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  height: 28px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  padding: 0 22px 0 8px;
+  background-image: var(--select-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 11px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.toolbar-export-select:hover {
+  background-color: var(--color-selection);
+  border-color: var(--color-accent);
+}
+
+.toolbar-export-select:focus,
+.toolbar-export-select:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  outline: none;
+}
+
 .toolbar-select option,
+.toolbar-export-select option,
 select option {
   background-color: var(--color-main-bg);
   color: var(--color-text);
+  padding: 4px 8px;
 }
 
 /* Responsive 3-Dot More Menu */

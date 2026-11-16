@@ -394,17 +394,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {onExportNote && isFull && (
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <select
-              style={{
-                height: '28px',
-                fontSize: '11px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-divider)',
-                background: 'transparent',
-                color: 'var(--color-secondary)',
-                padding: '0 4px',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
+              className="toolbar-export-select"
               onChange={(e) => {
                 if (e.target.value) {
                   onExportNote(e.target.value as 'txt' | 'html' | 'json');
