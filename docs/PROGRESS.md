@@ -19,4 +19,17 @@
 | **Phase 4** | Polished UI and Accessibility | Implemented | Verified | macOS Notes dark/light tokens, responsive 3-pane layout with mobile/tablet breakpoints, resizable panels with localStorage persistence, keyboard shortcuts (Ctrl+F search focus, Ctrl+N, Ctrl+, settings, Ctrl+Shift+S sidebar), Arrow key note-list navigation, tooltips, and accessible focus rings. All 4 Playwright E2E tests green. |
 | **Phase 5** | Exchange and Attachments | Implemented | Verified | Scoped attachments in platform AppData/attachments with safe hashed paths & 25MB limits. Standalone HTML, plain text, and JSON note export. Archive JSON export/import preview modal with collision detection and duplicate strategy resolution (keep both, overwrite, skip). All Rust integration and Playwright E2E tests green. |
 | **Phase 6** | Recovery and Backups | Implemented | Verified | Point-in-time version snapshots with rollback UI, localStorage emergency crash draft auto-recovery on session restoration, SQLite VACUUM snapshot backup command. All Rust integration and Playwright E2E tests green. |
-| **Phase 7** | Hardening and Packaging | Implemented | Verified | Full regression run passed: `npm run typecheck`, `npm run lint`, 13 Vitest tests, 7 Rust integration tests (`cargo test`), 22 Playwright E2E tests in real browser. Production build verified with `npm run build` and `npx tauri build`, outputting standalone executable `lumen-notes.exe` and MSI/NSIS installer bundles. |
+| **Phase 7** | Hardening and Packaging | Implemented | Verified | Full regression run passed: `npm run typecheck`, 13 Vitest tests, 7 Rust integration tests (`cargo test`), 23 Playwright E2E tests in real browser. Production build verified with `npm run build` and `npx tauri build`, outputting standalone executable `lumen-notes.exe` and MSI/NSIS installer bundles. |
+
+---
+
+## Post-Phase Enhancements & UX Refinements (Verified)
+1. **Borderless Writing Canvas**: Removed focus rectangles and yellow outline borders from `.editor-title-input`, `.tiptap`, `.ProseMirror`, and content areas using targeted CSS overrides while preserving keyboard accessibility rings on interactive buttons.
+2. **100% Canvas Height & Click-to-Focus**: Expanded `.editor-scroll-area`, `.editor-content-wrapper`, and `.tiptap` to stretch to 100% canvas height. Clicking any empty space on the scroll canvas automatically focuses the editor at the end of the text.
+3. **Browser Context Menu Suppression**: Disabled default webview browser right-click menu (Print, Save as, Reload, Inspect) across the application window.
+4. **Inline Image Insertion**: Configured `@tiptap/extension-image` with direct toolbar image insertion and clipboard image pasting inline into the rich-text note body.
+5. **Interactive Attachment Viewer & Lightbox**:
+   - Clicking an image attachment chip or inline image opens a full-resolution Lightbox Viewer with download/save action and keyboard `Escape` dismissal.
+   - Clicking non-image attachment chips initiates system download/open.
+   - Stop-propagation prevents deletion buttons from triggering attachment preview.
+6. **Automated Verification**: Added Playwright E2E coverage for inline image insertion, attachment opening in lightbox viewer, and click-to-focus on canvas. 23 Playwright E2E tests, 13 Vitest unit tests, and 7 Rust backend integration tests all pass.

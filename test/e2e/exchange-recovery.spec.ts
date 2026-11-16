@@ -6,7 +6,7 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     await page.waitForSelector('[data-testid="app-shell"]');
   });
 
-  test('Attachments lifecycle: upload, view in drawer, and delete', async ({ page }) => {
+  test('Attachments lifecycle: upload, view in drawer, click to open in lightbox, and delete', async ({ page }) => {
     // Select default note
     const firstItem = page.locator('.notelist-item').first();
     await firstItem.click();
@@ -22,8 +22,20 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     // Check that attachments drawer appears with the chip
     const drawer = page.locator('[data-testid="attachments-drawer"]');
     await expect(drawer).toBeVisible();
-    const chip = drawer.locator('.attachment-chip-name');
-    await expect(chip).toHaveText('diagram.png');
+    const chip = drawer.locator('.attachment-chip').first();
+    await expect(chip).toBeVisible();
+    await expect(drawer.locator('.attachment-chip-name')).toHaveText('diagram.png');
+
+    // Clicking the attachment chip opens the Lightbox Viewer
+    await chip.click();
+    const lightbox = page.locator('[data-testid="attachment-lightbox"]');
+    await expect(lightbox).toBeVisible();
+    await expect(lightbox.locator('.editor-lightbox-title')).toContainText('diagram.png');
+
+    // Close the lightbox via close button
+    const closeBtn = lightbox.locator('.editor-lightbox-btn.close');
+    await closeBtn.click();
+    await expect(lightbox).not.toBeVisible();
 
     // Delete attachment
     page.on('dialog', (dialog) => dialog.accept());
@@ -180,5 +192,41 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
 
     // Both new notes should appear in the note list
     await expect(page.locator('.notelist-item:has-text("Brand New Imported Note")')).toBeVisible();
+  });
+
+  test('Inline image insertion and canvas click-to-focus', async ({ page }) => {
+    const firstItem = page.locator('.notelist-item').first();
+    await firstItem.click();
+
+    // Verify insert image toolbar button exists
+    const insertImageBtn = page.locator('[data-testid="toolbar-insert-image-btn"]');
+    await expect(insertImageBtn).toBeVisible();
+
+    // Insert inline image via hidden input
+    const inlineInput = page.locator('[data-testid="inline-image-file-input"]');
+    await inlineInput.setInputFiles({
+      name: 'screenshot.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
+    });
+
+    // Verify inline image element is placed inside the Tiptap ProseMirror document
+    const inlineImg = page.locator('.tiptap img.editor-inline-image');
+    await expect(inlineImg).toBeVisible();
+
+    // Clicking the inline image opens the Lightbox Viewer
+    await inlineImg.click();
+    const lightbox = page.locator('[data-testid="attachment-lightbox"]');
+    await expect(lightbox).toBeVisible();
+    await expect(lightbox.locator('.editor-lightbox-title')).toContainText('screenshot.png');
+
+    // Press Escape to dismiss lightbox
+    await page.keyboard.press('Escape');
+    await expect(lightbox).not.toBeVisible();
+
+    // Click canvas below text to verify click-to-focus
+    const scrollArea = page.locator('.editor-scroll-area');
+    await scrollArea.click({ position: { x: 100, y: 400 } });
+    await expect(page.locator('.ProseMirror-focused')).toBeVisible();
   });
 });

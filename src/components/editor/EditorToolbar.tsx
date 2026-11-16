@@ -19,6 +19,7 @@ import {
   Search,
   Paperclip,
   History,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { getToolbarState, executeToolbarAction } from '../../editor/commands';
 import { isValidExternalUrl } from '../../editor/document';
@@ -28,6 +29,7 @@ interface EditorToolbarProps {
   onToggleFind?: () => void;
   isFindOpen?: boolean;
   onAttachClick?: () => void;
+  onInsertImage?: () => void;
   onOpenSnapshots?: () => void;
   onExportNote?: (format: 'txt' | 'html' | 'json') => void;
 }
@@ -37,6 +39,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onToggleFind,
   isFindOpen,
   onAttachClick,
+  onInsertImage,
   onOpenSnapshots,
   onExportNote,
 }) => {
@@ -275,6 +278,22 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
       </div>
 
       <div className="toolbar-group">
+        {onInsertImage && (
+          <button
+            type="button"
+            className="toolbar-btn"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onInsertImage();
+            }}
+            title="Insert image at cursor"
+            aria-label="Insert image"
+            data-testid="toolbar-insert-image-btn"
+          >
+            <ImageIcon size={16} />
+          </button>
+        )}
+
         {onAttachClick && (
           <button
             type="button"

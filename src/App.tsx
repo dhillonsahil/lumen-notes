@@ -132,6 +132,15 @@ export function App() {
     }
   }, [activeNote?.id, activeNote?.document_json]);
 
+  // Disable default browser context menu (Print, Save as, Inspect, etc.)
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('contextmenu', handleContextMenu);
+    return () => window.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

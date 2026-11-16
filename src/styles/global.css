@@ -50,17 +50,42 @@ input, textarea, select {
 }
 
 /* Accessible focus ring for keyboard navigation */
-:focus-visible {
+:focus-visible:not(.editor-title-input):not(.ProseMirror):not(.tiptap):not([contenteditable="true"]) {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
 
 /* Ensure interactive elements have smooth transitions and clear outlines */
 button:focus-visible,
-input:focus-visible,
+input:focus-visible:not(.editor-title-input),
 select:focus-visible,
 [role="option"]:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
+}
+
+/* Seamless borderless writing surface for macOS Notes aesthetic */
+.editor-title-input,
+.editor-title-input:focus,
+.editor-title-input:focus-visible,
+.tiptap,
+.tiptap:focus,
+.tiptap:focus-visible,
+.tiptap p,
+.tiptap p:focus,
+.tiptap p:focus-visible,
+.ProseMirror,
+.ProseMirror:focus,
+.ProseMirror:focus-visible,
+.ProseMirror-focused,
+[contenteditable="true"],
+[contenteditable="true"]:focus,
+[contenteditable="true"]:focus-visible,
+.editor-scroll-area,
+.editor-content-wrapper,
+[data-testid="editor-content"] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }

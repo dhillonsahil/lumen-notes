@@ -8,7 +8,15 @@ import { EditorToolbar } from './EditorToolbar';
 import { SnapshotModal } from '../dialogs/SnapshotModal';
 import { ipcClient } from '../../ipc/client';
 import type { Attachment } from '../../ipc/types';
-import { X, ChevronDown, ChevronUp, Trash2, FileText } from 'lucide-react';
+import {
+  X,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Download,
+} from 'lucide-react';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'error';
 
@@ -49,6 +57,14 @@ export const EditorView: React.FC<EditorViewProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentThumbnails, setAttachmentThumbnails] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Lightbox viewer state
+  const [lightboxItem, setLightboxItem] = useState<{
+    name: string;
+    url: string;
+    sizeBytes?: number;
+  } | null>(null);
 
   // Snapshots state
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
@@ -72,6 +88,23 @@ export const EditorView: React.FC<EditorViewProps> = ({
         return sanitizePastedHtml(html);
       },
       handlePaste(_view, event) {
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+              const file = items[i].getAsFile();
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  editor?.chain().focus().setImage({ src: dataUrl, alt: file.name || 'Pasted Image' }).run();
+                };
+                reader.readAsDataURL(file);
+                return true;
+              }
+            }
+          }
+        }
         const plainText = event.clipboardData?.getData('text/plain');
         if (plainText && !event.clipboardData?.types.includes('text/html')) {
           return false;
@@ -214,6 +247,42 @@ export const EditorView: React.FC<EditorViewProps> = ({
     e.target.value = '';
   };
 
+  const handleInsertInlineImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      editor.chain().focus().setImage({ src: dataUrl, alt: file.name }).run();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleOpenAttachment = async (att: Attachment) => {
+    try {
+      const dataUrl = await ipcClient.getAttachmentData(att.id);
+      if (att.mime_type.startsWith('image/')) {
+        setLightboxItem({
+          name: att.original_name,
+          url: dataUrl,
+          sizeBytes: att.size_bytes,
+        });
+      } else {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = att.original_name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      console.error('Failed to open attachment:', err);
+      alert('Failed to open attachment: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   const handleDeleteAttachment = async (id: string) => {
     if (window.confirm('Delete this attachment?')) {
       try {
@@ -247,23 +316,65 @@ export const EditorView: React.FC<EditorViewProps> = ({
     }
   };
 
-  // Keyboard shortcut for Find in note
+  // Keyboard shortcut for Find in note and Lightbox Escape
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (lightboxItem) {
+          setLightboxItem(null);
+          return;
+        }
+        if (isFindOpen) {
+          setIsFindOpen(false);
+          return;
+        }
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setIsFindOpen((prev) => !prev);
-      } else if (e.key === 'Escape' && isFindOpen) {
-        setIsFindOpen(false);
       }
     },
-    [isFindOpen]
+    [isFindOpen, lightboxItem]
   );
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  // Click on canvas / empty space focuses editor at the end
+  const handleScrollAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+
+    // If clicked on an image inside the editor, open lightbox viewer
+    if (target.tagName.toLowerCase() === 'img') {
+      const img = target as HTMLImageElement;
+      setLightboxItem({
+        name: img.alt || 'Inline Image',
+        url: img.src,
+      });
+      return;
+    }
+
+    // If clicked inside interactive controls (inputs, buttons, chip, banners, find bar)
+    if (
+      target.closest(
+        '.editor-title-input, .editor-attachments, button, input, .editor-draft-banner, .editor-find-bar'
+      )
+    ) {
+      return;
+    }
+
+    // If clicked on empty space in scroll area or content wrapper, focus editor at end
+    if (
+      target.classList.contains('editor-scroll-area') ||
+      target.classList.contains('editor-content-wrapper') ||
+      target.getAttribute('data-testid') === 'editor-content' ||
+      target.classList.contains('tiptap')
+    ) {
+      editor?.commands.focus('end');
+    }
+  };
 
   // Find logic in document plain text
   useEffect(() => {
@@ -296,6 +407,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
         onToggleFind={() => setIsFindOpen((prev) => !prev)}
         isFindOpen={isFindOpen}
         onAttachClick={() => fileInputRef.current?.click()}
+        onInsertImage={() => inlineImageInputRef.current?.click()}
         onOpenSnapshots={() => setIsSnapshotModalOpen(true)}
         onExportNote={handleExportNote}
       />
@@ -307,6 +419,16 @@ export const EditorView: React.FC<EditorViewProps> = ({
         style={{ display: 'none' }}
         onChange={handleFileUpload}
         data-testid="attachment-file-input"
+      />
+
+      {/* Hidden file input for inline images */}
+      <input
+        ref={inlineImageInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleInsertInlineImage}
+        data-testid="inline-image-file-input"
       />
 
       {/* Emergency Crash Recovery Banner */}
@@ -411,7 +533,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
         </div>
       )}
 
-      <div className="editor-scroll-area">
+      <div className="editor-scroll-area" onClick={handleScrollAreaClick}>
         <div className="editor-content-wrapper">
           <input
             type="text"
@@ -428,7 +550,21 @@ export const EditorView: React.FC<EditorViewProps> = ({
           {attachments.length > 0 && (
             <div className="editor-attachments" data-testid="attachments-drawer">
               {attachments.map((att) => (
-                <div key={att.id} className="attachment-chip" data-testid={`attachment-chip-${att.id}`}>
+                <div
+                  key={att.id}
+                  className="attachment-chip"
+                  data-testid={`attachment-chip-${att.id}`}
+                  onClick={() => handleOpenAttachment(att)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpenAttachment(att);
+                    }
+                  }}
+                  title={`Click to open ${att.original_name}`}
+                >
                   {attachmentThumbnails[att.id] ? (
                     <img
                       src={attachmentThumbnails[att.id]}
@@ -445,7 +581,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
                   <button
                     type="button"
                     className="attachment-chip-btn"
-                    onClick={() => handleDeleteAttachment(att.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAttachment(att.id);
+                    }}
                     title="Remove attachment"
                     aria-label={`Remove attachment ${att.original_name}`}
                   >
@@ -512,6 +651,59 @@ export const EditorView: React.FC<EditorViewProps> = ({
             loadAttachments();
           }}
         />
+      )}
+
+      {/* Lightbox Image / Attachment Modal */}
+      {lightboxItem && (
+        <div
+          className="editor-lightbox-overlay"
+          data-testid="attachment-lightbox"
+          onClick={() => setLightboxItem(null)}
+        >
+          <div
+            className="editor-lightbox-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="editor-lightbox-header">
+              <div className="editor-lightbox-title" title={lightboxItem.name}>
+                <ImageIcon size={16} />
+                <span>{lightboxItem.name}</span>
+                {lightboxItem.sizeBytes !== undefined && (
+                  <span className="editor-lightbox-size">
+                    ({formatFileSize(lightboxItem.sizeBytes)})
+                  </span>
+                )}
+              </div>
+              <div className="editor-lightbox-actions">
+                <a
+                  href={lightboxItem.url}
+                  download={lightboxItem.name}
+                  className="editor-lightbox-btn"
+                  title="Download file"
+                >
+                  <Download size={14} />
+                  <span>Save</span>
+                </a>
+                <button
+                  type="button"
+                  className="editor-lightbox-btn close"
+                  onClick={() => setLightboxItem(null)}
+                  title="Close viewer"
+                  aria-label="Close viewer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="editor-lightbox-body">
+              <img
+                src={lightboxItem.url}
+                alt={lightboxItem.name}
+                className="editor-lightbox-img"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

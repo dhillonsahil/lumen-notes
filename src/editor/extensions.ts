@@ -2,6 +2,7 @@ import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
 import type { AnyExtension } from '@tiptap/core';
 
 export interface LumenEditorExtensionsOptions {
@@ -54,6 +55,13 @@ export function getLumenEditorExtensions(options: LumenEditorExtensionsOptions =
       placeholder: options.placeholder || 'Start writing...',
       emptyEditorClass: 'is-editor-empty',
       emptyNodeClass: 'is-empty',
+    }),
+    Image.configure({
+      inline: true,
+      allowBase64: true,
+      HTMLAttributes: {
+        class: 'editor-inline-image',
+      },
     }),
   ];
 }

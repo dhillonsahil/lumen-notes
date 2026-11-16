@@ -126,6 +126,8 @@
   display: flex;
   justify-content: center;
   padding: 32px var(--editor-padding-x) 64px var(--editor-padding-x);
+  cursor: text;
+  min-height: 0;
 }
 
 .editor-content-wrapper {
@@ -133,6 +135,18 @@
   max-width: var(--editor-max-width);
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  cursor: text;
+}
+
+/* Editor content container from @tiptap/react */
+[data-testid="editor-content"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  cursor: text;
 }
 
 /* Note Title Field */
@@ -145,10 +159,18 @@
   background: transparent;
   border: none;
   outline: none;
+  box-shadow: none;
   width: 100%;
   margin-bottom: 20px;
   padding: 0;
   resize: none;
+}
+
+.editor-title-input:focus,
+.editor-title-input:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .editor-title-input::placeholder {
@@ -162,8 +184,39 @@
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
   color: var(--color-text);
-  outline: none;
-  min-height: 350px;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 100%;
+  flex: 1;
+  cursor: text;
+  display: flex;
+  flex-direction: column;
+}
+
+.tiptap:focus,
+.tiptap:focus-visible,
+.ProseMirror-focused {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Inline Images */
+.editor-inline-image,
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: 12px 0;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.editor-inline-image:hover,
+.tiptap img:hover {
+  opacity: 0.95;
 }
 
 .tiptap p {
@@ -385,13 +438,20 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   background-color: var(--color-hover);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-metadata);
   color: var(--color-text);
   max-width: 240px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.attachment-chip:hover {
+  background-color: var(--color-selection);
+  border-color: var(--color-accent);
 }
 
 .attachment-chip-name {
@@ -436,4 +496,116 @@
   border-bottom: 1px solid var(--color-divider);
   color: var(--color-accent);
   font-size: var(--font-size-metadata);
+}
+
+/* Image / Attachment Lightbox Modal */
+.editor-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.editor-lightbox-card {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.editor-lightbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: var(--color-titlebar-bg);
+  border-bottom: 1px solid var(--color-divider);
+  gap: 16px;
+}
+
+.editor-lightbox-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-lightbox-size {
+  color: var(--color-secondary);
+  font-size: var(--font-size-metadata);
+}
+
+.editor-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-lightbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--color-hover);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-metadata);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.editor-lightbox-btn:hover {
+  background-color: var(--color-selection);
+  border-color: var(--color-accent);
+}
+
+.editor-lightbox-btn.close {
+  padding: 6px;
+}
+
+.editor-lightbox-btn.close:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.editor-lightbox-body {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  max-height: calc(90vh - 65px);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.editor-lightbox-img {
+  max-width: 100%;
+  max-height: calc(90vh - 105px);
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
