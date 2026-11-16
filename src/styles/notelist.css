@@ -18,6 +18,26 @@
   gap: 8px;
 }
 
+.notelist-sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+}
+
+.notelist-sidebar-toggle-btn:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
 .notelist-search-wrapper {
   flex: 1;
   position: relative;
@@ -82,16 +102,42 @@
   height: 28px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-divider);
-  background-color: transparent;
-  color: var(--color-secondary);
+  background-color: var(--color-main-bg);
+  color: var(--color-text);
   font-size: var(--font-size-metadata);
   padding: 0 4px;
   outline: none;
   cursor: pointer;
+  transition: border-color 0.12s ease;
 }
 
 .notelist-sort-select:hover {
+  border-color: var(--color-accent);
+}
+
+.notelist-sort-select option {
+  background-color: var(--color-main-bg);
   color: var(--color-text);
+}
+
+.notelist-sort-order-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-main-bg);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.notelist-sort-order-btn:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-accent);
 }
 
 /* Scrollable Note Items List */

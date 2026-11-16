@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Editor } from '@tiptap/react';
 import {
   Undo,
@@ -20,6 +20,8 @@ import {
   Paperclip,
   History,
   Image as ImageIcon,
+  MoreHorizontal,
+  FileDown,
 } from 'lucide-react';
 import { getToolbarState, executeToolbarAction } from '../../editor/commands';
 import { isValidExternalUrl } from '../../editor/document';
@@ -47,6 +49,26 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkInput, setLinkInput] = useState('');
   const [linkError, setLinkError] = useState('');
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowMoreMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showMoreMenu]);
 
   const handleAction = (e: React.MouseEvent, action: string, value?: unknown) => {
     // Crucial: preventDefault so the ProseMirror editor does not lose selection/focus!
@@ -169,7 +191,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         </button>
         <button
           type="button"
-          className={`toolbar-btn ${state.isStrike ? 'is-active' : ''}`}
+          className={`toolbar-btn toolbar-collapsible ${state.isStrike ? 'is-active' : ''}`}
           onMouseDown={(e) => handleAction(e, 'strike')}
           title="Strikethrough"
           aria-label="Strikethrough"
@@ -179,7 +201,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         </button>
         <button
           type="button"
-          className={`toolbar-btn ${state.isCode ? 'is-active' : ''}`}
+          className={`toolbar-btn toolbar-collapsible ${state.isCode ? 'is-active' : ''}`}
           onMouseDown={(e) => handleAction(e, 'code')}
           title="Inline Code"
           aria-label="Inline Code"
@@ -221,11 +243,11 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           <CheckSquare size={16} />
         </button>
 
-        <div className="toolbar-separator" />
+        <div className="toolbar-separator toolbar-collapsible" />
 
         <button
           type="button"
-          className={`toolbar-btn ${state.isBlockquote ? 'is-active' : ''}`}
+          className={`toolbar-btn toolbar-collapsible ${state.isBlockquote ? 'is-active' : ''}`}
           onMouseDown={(e) => handleAction(e, 'blockquote')}
           title="Block Quote"
           aria-label="Block Quote"
@@ -235,7 +257,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         </button>
         <button
           type="button"
-          className={`toolbar-btn ${state.isCodeBlock ? 'is-active' : ''}`}
+          className={`toolbar-btn toolbar-collapsible ${state.isCodeBlock ? 'is-active' : ''}`}
           onMouseDown={(e) => handleAction(e, 'codeBlock')}
           title="Code Block"
           aria-label="Code Block"
@@ -245,7 +267,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         </button>
         <button
           type="button"
-          className="toolbar-btn"
+          className="toolbar-btn toolbar-collapsible"
           onMouseDown={(e) => handleAction(e, 'horizontalRule')}
           title="Horizontal Rule"
           aria-label="Horizontal Rule"
@@ -313,7 +335,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {onOpenSnapshots && (
           <button
             type="button"
-            className="toolbar-btn"
+            className="toolbar-btn toolbar-collapsible"
             onMouseDown={(e) => {
               e.preventDefault();
               onOpenSnapshots();
@@ -327,7 +349,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         )}
 
         {onExportNote && (
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <div className="toolbar-collapsible" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <select
               style={{
                 height: '28px',
@@ -372,6 +394,162 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             <Search size={16} />
           </button>
         )}
+
+        {/* 3-Dot Responsive Overflow Menu */}
+        <div style={{ position: 'relative' }} ref={moreMenuRef}>
+          <button
+            type="button"
+            className={`toolbar-btn ${showMoreMenu ? 'is-active' : ''}`}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setShowMoreMenu((prev) => !prev);
+            }}
+            title="More Options"
+            aria-label="More Options"
+            data-testid="toolbar-more-btn"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+
+          {showMoreMenu && (
+            <div className="toolbar-more-menu" data-testid="toolbar-more-menu">
+              {onOpenSnapshots && (
+                <button
+                  type="button"
+                  className="toolbar-more-menu-item"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    onOpenSnapshots();
+                  }}
+                  data-testid="more-menu-history-btn"
+                >
+                  <History size={15} />
+                  <span>Version History & Snapshots</span>
+                </button>
+              )}
+
+              {onInsertImage && (
+                <button
+                  type="button"
+                  className="toolbar-more-menu-item"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    onInsertImage();
+                  }}
+                >
+                  <ImageIcon size={15} />
+                  <span>Insert Image</span>
+                </button>
+              )}
+
+              {onAttachClick && (
+                <button
+                  type="button"
+                  className="toolbar-more-menu-item"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    onAttachClick();
+                  }}
+                >
+                  <Paperclip size={15} />
+                  <span>Attach File</span>
+                </button>
+              )}
+
+              <div className="toolbar-more-menu-divider" />
+
+              <div className="toolbar-more-menu-section-title">Formatting</div>
+
+              <button
+                type="button"
+                className={`toolbar-more-menu-item ${state.isBlockquote ? 'is-active' : ''}`}
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  executeToolbarAction(editor, 'blockquote');
+                }}
+              >
+                <Quote size={15} />
+                <span>Blockquote</span>
+              </button>
+
+              <button
+                type="button"
+                className={`toolbar-more-menu-item ${state.isCodeBlock ? 'is-active' : ''}`}
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  executeToolbarAction(editor, 'codeBlock');
+                }}
+              >
+                <SquareCode size={15} />
+                <span>Code Block</span>
+              </button>
+
+              <button
+                type="button"
+                className="toolbar-more-menu-item"
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  executeToolbarAction(editor, 'horizontalRule');
+                }}
+              >
+                <Minus size={15} />
+                <span>Horizontal Rule</span>
+              </button>
+
+              <button
+                type="button"
+                className={`toolbar-more-menu-item ${state.isStrike ? 'is-active' : ''}`}
+                onClick={() => {
+                  setShowMoreMenu(false);
+                  executeToolbarAction(editor, 'strike');
+                }}
+              >
+                <Strikethrough size={15} />
+                <span>Strikethrough</span>
+              </button>
+
+              {onExportNote && (
+                <>
+                  <div className="toolbar-more-menu-divider" />
+                  <div className="toolbar-more-menu-section-title">Export Note</div>
+                  <button
+                    type="button"
+                    className="toolbar-more-menu-item"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      onExportNote('txt');
+                    }}
+                  >
+                    <FileDown size={15} />
+                    <span>Plain Text (.txt)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="toolbar-more-menu-item"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      onExportNote('html');
+                    }}
+                  >
+                    <FileDown size={15} />
+                    <span>HTML (.html)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="toolbar-more-menu-item"
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      onExportNote('json');
+                    }}
+                  >
+                    <FileDown size={15} />
+                    <span>JSON Archive (.json)</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {showLinkDialog && (

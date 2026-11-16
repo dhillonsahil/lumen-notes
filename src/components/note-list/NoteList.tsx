@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Search,
   Plus,
@@ -7,8 +7,12 @@ import {
   Archive,
   Trash2,
   RotateCcw,
+  PanelLeft,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
 } from 'lucide-react';
 import type { NoteSummary } from '../../ipc/types';
+import { ConfirmModal } from '../dialogs/ConfirmModal';
 
 interface NoteListProps {
   notes: NoteSummary[];
@@ -18,6 +22,9 @@ interface NoteListProps {
   sortBy: 'modified_at' | 'created_at' | 'title';
   sortOrder: 'asc' | 'desc';
   isCreatingNote?: boolean;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
+  onToggleSortOrder?: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
@@ -36,7 +43,11 @@ export const NoteList: React.FC<NoteListProps> = ({
   activeView,
   searchQuery,
   sortBy,
+  sortOrder,
   isCreatingNote,
+  isSidebarCollapsed,
+  onToggleSidebar,
+  onToggleSortOrder,
   searchInputRef,
   onSelectNote,
   onCreateNote,
@@ -48,6 +59,12 @@ export const NoteList: React.FC<NoteListProps> = ({
   onDeleteNote,
   onRestoreNote,
 }) => {
+  const [deleteModalState, setDeleteModalState] = useState<{
+    isOpen: boolean;
+    noteId: string;
+    permanent: boolean;
+  }>({ isOpen: false, noteId: '', permanent: false });
+
   const formatDate = (isoString: string): string => {
     try {
       const date = new Date(isoString);
@@ -79,6 +96,19 @@ export const NoteList: React.FC<NoteListProps> = ({
   return (
     <div className="notelist-container" data-testid="notelist-pane">
       <div className="notelist-header">
+        {onToggleSidebar && (
+          <button
+            type="button"
+            className="notelist-sidebar-toggle-btn"
+            onClick={onToggleSidebar}
+            title={isSidebarCollapsed ? 'Open Sidebar (Ctrl+Shift+S)' : 'Close Sidebar (Ctrl+Shift+S)'}
+            aria-label="Toggle Sidebar"
+            data-testid="notelist-sidebar-toggle-btn"
+          >
+            <PanelLeft size={16} />
+          </button>
+        )}
+
         <div className="notelist-search-wrapper">
           <Search size={14} className="notelist-search-icon" />
           <input
@@ -108,25 +138,37 @@ export const NoteList: React.FC<NoteListProps> = ({
             }
             title="Sort Notes"
             aria-label="Sort Notes"
+            data-testid="notelist-sort-select"
           >
             <option value="modified_at">Date</option>
             <option value="title">Title</option>
             <option value="created_at">Created</option>
           </select>
 
-          {activeView !== 'trash' && (
+          {onToggleSortOrder && (
             <button
               type="button"
-              className="notelist-new-btn"
-              onClick={onCreateNote}
-              disabled={isCreatingNote}
-              title="New Note (Ctrl+N)"
-              aria-label="New Note"
-              data-testid="notelist-new-note-btn"
+              className="notelist-sort-order-btn"
+              onClick={onToggleSortOrder}
+              title={sortOrder === 'asc' ? 'Sort Ascending (Click for Descending)' : 'Sort Descending (Click for Ascending)'}
+              aria-label="Toggle sort order"
+              data-testid="notelist-sort-order-btn"
             >
-              <Plus size={16} />
+              {sortOrder === 'asc' ? <ArrowUpNarrowWide size={15} /> : <ArrowDownWideNarrow size={15} />}
             </button>
           )}
+
+          <button
+            type="button"
+            className="notelist-new-btn"
+            onClick={onCreateNote}
+            disabled={isCreatingNote}
+            title="New Note (Ctrl+N)"
+            aria-label="New Note"
+            data-testid="notelist-new-note-btn"
+          >
+            <Plus size={16} />
+          </button>
         </div>
       </div>
 
@@ -159,9 +201,7 @@ export const NoteList: React.FC<NoteListProps> = ({
               // Delete key to trash or permanently delete
               e.preventDefault();
               if (activeView === 'trash') {
-                if (window.confirm('Permanently delete this note? This action cannot be undone.')) {
-                  onDeleteNote(note.id, true);
-                }
+                setDeleteModalState({ isOpen: true, noteId: note.id, permanent: true });
               } else {
                 onDeleteNote(note.id, false);
               }
@@ -222,12 +262,11 @@ export const NoteList: React.FC<NoteListProps> = ({
                       className="sidebar-section-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm('Permanently delete this note? This action cannot be undone.')) {
-                          onDeleteNote(note.id, true);
-                        }
+                        setDeleteModalState({ isOpen: true, noteId: note.id, permanent: true });
                       }}
                       title="Delete Permanently"
                       aria-label="Delete Permanently"
+                      data-testid="note-permanent-delete-btn"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -310,6 +349,23 @@ export const NoteList: React.FC<NoteListProps> = ({
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModalState.isOpen}
+        title="Permanently Delete Note?"
+        message="This note will be permanently erased from your database. This action cannot be undone."
+        confirmLabel="Delete Permanently"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        icon="trash"
+        onConfirm={() => {
+          if (deleteModalState.noteId) {
+            onDeleteNote(deleteModalState.noteId, deleteModalState.permanent);
+          }
+          setDeleteModalState({ isOpen: false, noteId: '', permanent: false });
+        }}
+        onCancel={() => setDeleteModalState({ isOpen: false, noteId: '', permanent: false })}
+      />
     </div>
   );
 };

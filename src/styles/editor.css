@@ -86,6 +86,76 @@
   border-color: var(--color-accent);
 }
 
+.toolbar-select option,
+select option {
+  background-color: var(--color-main-bg);
+  color: var(--color-text);
+}
+
+/* Responsive 3-Dot More Menu */
+.toolbar-more-menu {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  min-width: 220px;
+  background-color: var(--color-main-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeIn 0.12s ease-out;
+}
+
+.toolbar-more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.toolbar-more-menu-item:hover {
+  background-color: var(--color-hover);
+}
+
+.toolbar-more-menu-item.is-active {
+  background-color: var(--color-selection);
+  color: var(--color-accent);
+}
+
+.toolbar-more-menu-divider {
+  height: 1px;
+  background-color: var(--color-divider);
+  margin: 4px 0;
+}
+
+.toolbar-more-menu-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-secondary);
+  padding: 4px 10px 2px;
+  font-weight: 600;
+}
+
+@media (max-width: 950px) {
+  .toolbar-collapsible {
+    display: none !important;
+  }
+}
+
 /* Find Bar */
 .editor-find-bar {
   display: flex;

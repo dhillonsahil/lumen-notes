@@ -5,7 +5,7 @@ import { NoteList } from './components/note-list/NoteList';
 import { EditorView } from './components/editor/EditorView';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { useNotesManager } from './app/useNotesManager';
-import { ChevronLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 export function App() {
   const {
@@ -38,6 +38,9 @@ export function App() {
     sidebarCounts,
     flushPendingSave,
     reloadNotes,
+    setSortOrder,
+    handleSaveSnapshot,
+    snapshotToastMessage,
   } = useNotesManager();
 
   // Layout & Resizing
@@ -150,10 +153,16 @@ export function App() {
 
       if (mod && (e.key.toLowerCase() === 'n' || e.code === 'KeyN')) {
         e.preventDefault();
+        if (activeView === 'trash') {
+          setActiveView('all');
+        }
         handleCreateNote();
       } else if (mod && (e.key === ',' || e.code === 'Comma')) {
         e.preventDefault();
         setShowSettings(true);
+      } else if (mod && !e.shiftKey && (e.key.toLowerCase() === 's' || e.code === 'KeyS')) {
+        e.preventDefault();
+        handleSaveSnapshot();
       } else if (mod && !e.shiftKey && (e.key.toLowerCase() === 'f' || e.code === 'KeyF')) {
         const isEditorFocused = document.activeElement?.closest('.ProseMirror');
         if (!isEditorFocused) {
@@ -169,11 +178,10 @@ export function App() {
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [handleCreateNote]);
+  }, [handleCreateNote, handleSaveSnapshot, activeView, setActiveView]);
 
   // Mobile Single-Pane navigation state
   const isMobile = windowWidth < 800;
-  const isTablet = windowWidth >= 800 && windowWidth < 1100;
   const [mobilePane, setMobilePane] = useState<'list' | 'editor'>('list');
 
   // When note selected on mobile, navigate to editor
@@ -187,7 +195,7 @@ export function App() {
   return (
     <div className="app-shell" data-testid="app-shell">
       {/* 1. Sidebar Pane */}
-      {(!isMobile && (!isTablet || !isSidebarCollapsed)) && (
+      {!isSidebarCollapsed && (!isMobile || mobilePane === 'list') && (
         <>
           <aside
             className="pane-sidebar"
@@ -204,6 +212,7 @@ export function App() {
               onCreateFolder={handleCreateFolder}
               onDeleteFolder={handleDeleteFolder}
               onOpenSettings={() => setShowSettings(true)}
+              onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
             />
           </aside>
           <div
@@ -224,26 +233,6 @@ export function App() {
             className="pane-notelist"
             style={{ width: isMobile ? '100%' : `${notelistWidth}px` }}
           >
-            {isTablet && (
-              <div
-                style={{
-                  height: '36px',
-                  padding: '0 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderBottom: '1px solid var(--color-divider)',
-                }}
-              >
-                <button
-                  type="button"
-                  className="sidebar-section-btn"
-                  onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-                  title={isSidebarCollapsed ? 'Open Sidebar' : 'Close Sidebar'}
-                >
-                  {isSidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-                </button>
-              </div>
-            )}
             <NoteList
               notes={notes}
               activeNoteId={activeNote?.id || null}
@@ -252,9 +241,17 @@ export function App() {
               sortBy={sortBy}
               sortOrder={sortOrder}
               isCreatingNote={isCreatingNote}
+              isSidebarCollapsed={isSidebarCollapsed}
+              onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
+              onToggleSortOrder={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
               searchInputRef={searchInputRef}
               onSelectNote={handleMobileSelectNote}
-              onCreateNote={handleCreateNote}
+              onCreateNote={() => {
+                if (activeView === 'trash') {
+                  setActiveView('all');
+                }
+                handleCreateNote();
+              }}
               onSearchChange={setSearchQuery}
               onSortChange={setSortBy}
               onTogglePin={handleTogglePin}
@@ -348,6 +345,34 @@ export function App() {
             </div>
           )}
         </main>
+      )}
+
+      {/* Manual Save Snapshot Toast Notification */}
+      {snapshotToastMessage && (
+        <div
+          data-testid="snapshot-toast"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999,
+            backgroundColor: 'var(--color-main-bg)',
+            border: '1px solid var(--color-divider)',
+            borderRadius: '20px',
+            padding: '8px 18px',
+            color: 'var(--color-text)',
+            fontSize: '13px',
+            fontWeight: 500,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          <span style={{ color: 'var(--color-accent)' }}>●</span>
+          <span>{snapshotToastMessage}</span>
+        </div>
       )}
 
       <SettingsModal

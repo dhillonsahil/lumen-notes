@@ -37,10 +37,12 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     await closeBtn.click();
     await expect(lightbox).not.toBeVisible();
 
-    // Delete attachment
-    page.on('dialog', (dialog) => dialog.accept());
+    // Delete attachment via stylish ConfirmModal
     const deleteBtn = drawer.locator('.attachment-chip-btn').first();
     await deleteBtn.click();
+    const confirmModal = page.locator('[data-testid="confirm-modal"]');
+    await expect(confirmModal).toBeVisible();
+    await page.locator('[data-testid="confirm-modal-confirm"]').click();
     await expect(drawer).not.toBeVisible();
   });
 
@@ -80,9 +82,13 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     await historyBtn.click();
     await expect(modal).toBeVisible();
 
-    page.on('dialog', (dialog) => dialog.accept());
     const restoreBtn = modal.locator('button:has-text("Restore")').first();
     await restoreBtn.click();
+
+    // Confirm restore via custom modal
+    const confirmRestoreModal = page.locator('[data-testid="confirm-modal"]');
+    await expect(confirmRestoreModal).toBeVisible();
+    await page.locator('[data-testid="confirm-modal-confirm"]').click();
 
     // Title should be restored to baseline
     await expect(titleInput).toHaveValue('Snapshot Baseline Title');
@@ -228,5 +234,58 @@ test.describe('Phase 5 & 6: Exchange, Attachments, and Recovery', () => {
     const scrollArea = page.locator('.editor-scroll-area');
     await scrollArea.click({ position: { x: 100, y: 400 } });
     await expect(page.locator('.ProseMirror-focused')).toBeVisible();
+  });
+
+  test('Ctrl+S manual save triggers snapshot creation and displays toast notification', async ({ page }) => {
+    // Select default note
+    const firstItem = page.locator('.notelist-item').first();
+    await firstItem.click();
+
+    // Type content
+    await page.locator('.ProseMirror').click();
+    await page.keyboard.type(' Important milestone update.');
+
+    // Press Ctrl+S
+    await page.keyboard.press('Control+s');
+
+    // Verify snapshot toast appears
+    const toast = page.locator('[data-testid="snapshot-toast"]');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Snapshot saved');
+  });
+
+  test('Toolbar 3-dot overflow menu, sidebar toggle, and sort order controls', async ({ page }) => {
+    // Select default note
+    const firstItem = page.locator('.notelist-item').first();
+    await firstItem.click();
+
+    // 1. Sidebar toggle button
+    const sidebarToggleBtn = page.locator('[data-testid="notelist-sidebar-toggle-btn"]');
+    await expect(sidebarToggleBtn).toBeVisible();
+    await sidebarToggleBtn.click();
+    // Sidebar should be collapsed
+    await expect(page.locator('[data-testid="sidebar-pane"]')).not.toBeVisible();
+    // Re-open sidebar
+    await sidebarToggleBtn.click();
+    await expect(page.locator('[data-testid="sidebar-pane"]')).toBeVisible();
+
+    // 2. Sort order toggle button
+    const sortOrderBtn = page.locator('[data-testid="notelist-sort-order-btn"]');
+    await expect(sortOrderBtn).toBeVisible();
+    await sortOrderBtn.click();
+
+    // 3. Toolbar 3-dot overflow menu
+    const moreBtn = page.locator('[data-testid="toolbar-more-btn"]');
+    await expect(moreBtn).toBeVisible();
+    await moreBtn.click();
+    const moreMenu = page.locator('[data-testid="toolbar-more-menu"]');
+    await expect(moreMenu).toBeVisible();
+
+    // Click Version History from 3-dot menu
+    await moreMenu.locator('[data-testid="more-menu-history-btn"]').click();
+    const modal = page.locator('[data-testid="snapshot-modal"]');
+    await expect(modal).toBeVisible();
+    await modal.getByRole('button', { name: 'Done' }).click();
+    await expect(modal).not.toBeVisible();
   });
 });

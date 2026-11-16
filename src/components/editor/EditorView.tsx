@@ -6,6 +6,7 @@ import { sanitizePastedHtml } from '../../editor/clipboard';
 import { extractPlainText, calculateDocumentStats } from '../../editor/document';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorContextMenu } from './EditorContextMenu';
+import { ConfirmModal } from '../dialogs/ConfirmModal';
 import { SnapshotModal } from '../dialogs/SnapshotModal';
 import { ipcClient } from '../../ipc/client';
 import { saveFileWithLocationPicker } from '../../utils/fileExport';
@@ -74,6 +75,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   // Custom right-click context menu state
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  // Attachment delete confirmation modal state
+  const [confirmDeleteAttachmentId, setConfirmDeleteAttachmentId] = useState<string | null>(null);
 
   // Snapshots state
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
@@ -299,15 +303,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
     }
   };
 
-  const handleDeleteAttachment = async (id: string) => {
-    if (window.confirm('Delete this attachment?')) {
-      try {
-        await ipcClient.deleteAttachment(id);
-        setAttachments((prev) => prev.filter((a) => a.id !== id));
-      } catch (err) {
-        console.error('Failed to delete attachment:', err);
-      }
-    }
+  const handleDeleteAttachment = (id: string) => {
+    setConfirmDeleteAttachmentId(id);
   };
 
   const handleExportNote = async (format: 'txt' | 'html' | 'json') => {
@@ -753,6 +750,29 @@ export const EditorView: React.FC<EditorViewProps> = ({
           onAttachFile={() => fileInputRef.current?.click()}
         />
       )}
+
+      {/* Attachment Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!confirmDeleteAttachmentId}
+        title="Delete Attachment?"
+        message="This file attachment will be permanently removed from this note."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        icon="trash"
+        onConfirm={async () => {
+          if (confirmDeleteAttachmentId) {
+            try {
+              await ipcClient.deleteAttachment(confirmDeleteAttachmentId);
+              setAttachments((prev) => prev.filter((a) => a.id !== confirmDeleteAttachmentId));
+            } catch (err) {
+              console.error('Failed to delete attachment:', err);
+            }
+          }
+          setConfirmDeleteAttachmentId(null);
+        }}
+        onCancel={() => setConfirmDeleteAttachmentId(null)}
+      />
     </div>
   );
 };

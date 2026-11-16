@@ -22,6 +22,7 @@ export function useNotesManager() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
+  const [snapshotToastMessage, setSnapshotToastMessage] = useState<string | null>(null);
 
   // Refs for race-condition and debounce protection
   const activeNoteRef = useRef<Note | null>(null);
@@ -437,6 +438,29 @@ export function useNotesManager() {
     [selectedFolderId, reloadNotes]
   );
 
+  // Manual Save & Snapshot Creation (Ctrl+S)
+  const handleSaveSnapshot = useCallback(async () => {
+    const active = activeNoteRef.current;
+    if (!active) return;
+
+    // 1. Flush any pending edits to database first
+    await flushPendingSave();
+
+    // 2. Fetch fresh note state to ensure revision is accurate
+    const currentNoteId = activeNoteRef.current?.id || active.id;
+    try {
+      setSaveStatus('saving');
+      const snap = await ipcClient.createSnapshot(currentNoteId);
+      setSaveStatus('saved');
+      setSnapshotToastMessage(`Snapshot saved (Revision ${snap.revision})`);
+      setTimeout(() => setSnapshotToastMessage(null), 3000);
+    } catch (err: unknown) {
+      console.error('Failed to create snapshot on manual save:', err);
+      setSaveStatus('error');
+      setErrorMessage(err instanceof Error ? err.message : String(err));
+    }
+  }, [flushPendingSave]);
+
   return {
     notes,
     folders,
@@ -469,5 +493,7 @@ export function useNotesManager() {
     reloadCounts,
     flushPendingSave,
     reloadNotes,
+    handleSaveSnapshot,
+    snapshotToastMessage,
   };
 }

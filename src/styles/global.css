@@ -3,6 +3,7 @@
 @import './layout.css';
 @import './sidebar.css';
 @import './notelist.css';
+@import './dialogs.css';
 
 * {
   box-sizing: border-box;

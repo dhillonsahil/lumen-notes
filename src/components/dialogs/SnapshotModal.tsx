@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, History, RotateCcw, Plus, Check } from 'lucide-react';
 import { ipcClient } from '../../ipc/client';
 import type { Note, Snapshot } from '../../ipc/types';
+import { ConfirmModal } from './ConfirmModal';
 
 interface SnapshotModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [restoreTarget, setConfirmRestoreTarget] = useState<Snapshot | null>(null);
 
   const loadSnapshots = async () => {
     setLoading(true);
@@ -52,10 +54,11 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
     }
   };
 
-  const handleRestore = async (snapshot: Snapshot) => {
-    if (!window.confirm(`Restore note to revision ${snapshot.revision}? Your current draft will be overwritten.`)) {
-      return;
-    }
+  const handleRestore = (snapshot: Snapshot) => {
+    setConfirmRestoreTarget(snapshot);
+  };
+
+  const executeRestore = async (snapshot: Snapshot) => {
     setRestoringId(snapshot.id);
     try {
       const restored = await ipcClient.restoreSnapshot(snapshot.id);
@@ -65,6 +68,7 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
       console.error('Failed to restore snapshot:', err);
     } finally {
       setRestoringId(null);
+      setConfirmRestoreTarget(null);
     }
   };
 
@@ -251,6 +255,20 @@ export const SnapshotModal: React.FC<SnapshotModalProps> = ({
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!restoreTarget}
+        title="Restore Version Snapshot?"
+        message={`Restore note to Revision ${restoreTarget?.revision}? Your current draft will be replaced with this version.`}
+        confirmLabel="Restore Version"
+        cancelLabel="Cancel"
+        isDestructive={false}
+        icon="restore"
+        onConfirm={() => {
+          if (restoreTarget) executeRestore(restoreTarget);
+        }}
+        onCancel={() => setConfirmRestoreTarget(null)}
+      />
     </div>
   );
 };

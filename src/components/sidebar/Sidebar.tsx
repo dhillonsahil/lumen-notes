@@ -7,9 +7,10 @@ import {
   Folder as FolderIcon,
   Plus,
   Settings as SettingsIcon,
-  NotebookPen,
+  PanelLeftClose,
 } from 'lucide-react';
 import type { Folder, NoteSummary, SidebarCounts } from '../../ipc/types';
+import { ConfirmModal } from '../dialogs/ConfirmModal';
 
 interface SidebarProps {
   notes: NoteSummary[];
@@ -22,6 +23,7 @@ interface SidebarProps {
   onCreateFolder: (name: string, parentId?: string) => Promise<unknown>;
   onDeleteFolder: (folderId: string) => void;
   onOpenSettings: () => void;
+  onToggleCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -35,10 +37,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateFolder,
   onDeleteFolder,
   onOpenSettings,
+  onToggleCollapse,
 }) => {
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [folderError, setFolderError] = useState('');
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Counts (Prefer accurate global counts across entire database, fallback to filtered notes)
   const allCount = counts ? counts.all : notes.filter((n) => !n.is_deleted && !n.archived).length;
@@ -64,11 +68,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="sidebar-container" data-testid="sidebar-pane">
-      <div className="sidebar-header">
+      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="sidebar-title">
-          <NotebookPen size={18} color="var(--color-accent)" />
+          <img src="/icon.svg" alt="Lumen Notes" style={{ width: 22, height: 22, borderRadius: 5, display: 'block' }} />
           <span>Lumen Notes</span>
         </div>
+        {onToggleCollapse && (
+          <button
+            type="button"
+            className="sidebar-section-btn"
+            onClick={onToggleCollapse}
+            title="Hide Sidebar (Ctrl+Shift+S)"
+            aria-label="Hide Sidebar"
+            data-testid="sidebar-collapse-btn"
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        )}
       </div>
 
       <nav className="sidebar-nav">
@@ -222,10 +238,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className="sidebar-section-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDeleteFolder(folder.id);
+                        setDeleteFolderTarget({ id: folder.id, name: folder.name });
                       }}
                       title="Delete folder"
                       aria-label={`Delete folder ${folder.name}`}
+                      data-testid={`delete-folder-btn-${folder.id}`}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -344,6 +361,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       )}
+      {/* Folder Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteFolderTarget}
+        title={`Delete "${deleteFolderTarget?.name}"?`}
+        message="Deleting this folder will not delete the notes inside it. They will remain accessible in All Notes."
+        confirmLabel="Delete Folder"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        icon="trash"
+        onConfirm={() => {
+          if (deleteFolderTarget) {
+            onDeleteFolder(deleteFolderTarget.id);
+          }
+          setDeleteFolderTarget(null);
+        }}
+        onCancel={() => setDeleteFolderTarget(null)}
+      />
     </aside>
   );
 };
